@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Виртуальный тур</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12100E;
+    --ink-soft:rgba(18,16,14,.72);
+    --fog:#EDE8E0;
+    --fog-dim:rgba(237,232,224,.58);
+    --moss:#3F6B4F;
+    --brass:#C2A76A;
+    --rail-h:104px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;
+    font-family:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+
+  #stage{position:absolute;inset:0 0 var(--rail-h) 0}
+  #pano{width:100%;height:100%}
+  .pnlm-load-box,.pnlm-about-msg{display:none!important}
+  .pnlm-container{background:var(--ink)!important}
+
+  /* --- шапка --- */
+  .plate{position:absolute;top:18px;left:18px;z-index:5;pointer-events:none;
+    padding:11px 16px 12px;border-radius:3px;
+    background:var(--ink-soft);backdrop-filter:blur(14px);
+    border-left:2px solid var(--brass)}
+  .plate .eyebrow{margin:0;font-size:10px;font-weight:500;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--fog-dim)}
+  .plate .room{margin:5px 0 0;font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--fog)}
+
+  /* --- кнопки --- */
+  .tools{position:absolute;top:18px;right:18px;z-index:5;display:flex;gap:7px}
+  .tools button{width:42px;height:42px;border:0;border-radius:3px;cursor:pointer;
+    background:var(--ink-soft);backdrop-filter:blur(14px);color:var(--fog);
+    display:grid;place-items:center;transition:background .18s,color .18s}
+  .tools button:hover{background:var(--moss)}
+  .tools button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+  .tools button[aria-pressed="true"]{background:var(--moss);color:#fff}
+  .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* --- лента помещений --- */
+  #rail{position:absolute;left:0;right:0;bottom:0;height:var(--rail-h);z-index:6;
+    display:flex;align-items:stretch;gap:0;overflow-x:auto;overflow-y:hidden;
+    background:#0C0B0A;border-top:1px solid rgba(194,167,106,.22);
+    scrollbar-width:none}
+  #rail::-webkit-scrollbar{display:none}
+
+  .zone{display:flex;align-items:center;padding:0 14px;flex:0 0 auto;
+    font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--fog-dim);writing-mode:vertical-rl;transform:rotate(180deg);
+    border-right:1px solid rgba(237,232,224,.09)}
+
+  .card{flex:0 0 auto;width:152px;position:relative;border:0;padding:0;cursor:pointer;
+    background:none;overflow:hidden;border-right:1px solid rgba(237,232,224,.09);
+    opacity:.5;transition:opacity .2s}
+  .card img{display:block;width:100%;height:100%;object-fit:cover}
+  .card figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 9px 7px;
+    font-size:11.5px;font-weight:500;color:var(--fog);text-align:left;line-height:1.25;
+    background:linear-gradient(to top,rgba(12,11,10,.92),transparent)}
+  .card:hover{opacity:.85}
+  .card:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
+  .card[aria-current="true"]{opacity:1}
+  .card[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;top:0;
+    height:3px;background:var(--moss)}
+
+  /* --- заставка --- */
+  #splash{position:absolute;inset:0;z-index:9;display:grid;place-items:center;
+    background:var(--ink);color:var(--fog-dim);font-size:13px;letter-spacing:.05em;
+    transition:opacity .5s}
+  #splash.gone{opacity:0;pointer-events:none}
+
+  @media (max-width:640px){
+    :root{--rail-h:88px}
+    .card{width:120px}
+    .plate .room{font-size:16px}
+    .plate{top:12px;left:12px}
+    .tools{top:12px;right:12px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"><div id="pano"></div></div>
+
+<div class="plate">
+  <p class="eyebrow">Виртуальный тур</p>
+  <p class="room" id="roomName">Вход в дом</p>
+</div>
+
+<div class="tools">
+  <button id="btnSpin" aria-pressed="false" title="Автоповорот" aria-label="Автоповорот">
+    <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4h-4"/></svg>
+  </button>
+  <button id="btnFull" title="На весь экран" aria-label="На весь экран">
+    <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  </button>
+</div>
+
+<nav id="rail" aria-label="Помещения"></nav>
+
+<div id="splash">Загружаем панораму…</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   СПИСОК ТОЧЕК ТУРА
+   Порядок здесь = порядок в ленте внизу.
+   Чтобы переименовать помещение — правь title.
+   Чтобы заменить фото — положи новый файл
+   с тем же именем в папку pano/ и thumb/.
+   ───────────────────────────────────────────── */
+const POINTS = [
+  {id:"vhod",       title:"Вход в дом",          zone:"Снаружи"},
+  {id:"dvor",       title:"Двор и парковка",     zone:"Снаружи"},
+  {id:"dorozhka",   title:"Дорожка вдоль дома",  zone:"Снаружи"},
+  {id:"uchastok",   title:"Участок",             zone:"Снаружи"},
+  {id:"prihozhaya", title:"Прихожая",            zone:"Внутри"},
+  {id:"holl1",      title:"Холл у входа",        zone:"Внутри"},
+  {id:"holl2",      title:"Центральный холл",    zone:"Внутри"},
+  {id:"gostinaya",  title:"Кухня-гостиная",      zone:"Внутри"},
+  {id:"kab1",       title:"Кабинет с диваном",   zone:"Внутри"},
+  {id:"kab2",       title:"Кабинет с панорамой", zone:"Внутри"},
+  {id:"kab3",       title:"Рабочая комната",     zone:"Внутри"},
+  {id:"sanuzel1",   title:"Санузел с ванной",    zone:"Внутри"},
+  {id:"sanuzel2",   title:"Санузел с душевой",   zone:"Внутри"},
+  {id:"kotelnaya",  title:"Котельная",           zone:"Внутри"}
+];
+
+const scenes = {};
+POINTS.forEach(p => {
+  scenes[p.id] = {
+    type: "equirectangular",
+    panorama: "pano/" + p.id + ".jpg",
+    hfov: 100, minHfov: 45, maxHfov: 120, pitch: 0, yaw: 0
+  };
+});
+
+const viewer = pannellum.viewer("pano", {
+  default: {
+    firstScene: POINTS[0].id,
+    sceneFadeDuration: 700,
+    autoLoad: true,
+    showControls: false,
+    compass: false,
+    keyboardZoom: true,
+    friction: 0.16,
+    backgroundColor: [0.07, 0.06, 0.055]
+  },
+  scenes: scenes
+});
+
+/* лента помещений */
+const rail = document.getElementById("rail");
+let lastZone = null;
+POINTS.forEach(p => {
+  if (p.zone !== lastZone) {
+    const z = document.createElement("div");
+    z.className = "zone";
+    z.textContent = p.zone;
+    rail.appendChild(z);
+    lastZone = p.zone;
+  }
+  const b = document.createElement("button");
+  b.className = "card";
+  b.dataset.id = p.id;
+  b.innerHTML = '<img src="thumb/' + p.id + '.jpg" alt="" loading="lazy">' +
+                '<figcaption>' + p.title + '</figcaption>';
+  b.addEventListener("click", () => viewer.loadScene(p.id));
+  rail.appendChild(b);
+});
+
+function markActive(id) {
+  const p = POINTS.find(x => x.id === id);
+  if (p) document.getElementById("roomName").textContent = p.title;
+  rail.querySelectorAll(".card").forEach(c => {
+    const on = c.dataset.id === id;
+    c.setAttribute("aria-current", on ? "true" : "false");
+    if (on) c.scrollIntoView({block:"nearest", inline:"nearest", behavior:"smooth"});
+  });
+}
+
+viewer.on("scenechange", markActive);
+viewer.on("load", () => document.getElementById("splash").classList.add("gone"));
+markActive(POINTS[0].id);
+
+/* автоповорот */
+const btnSpin = document.getElementById("btnSpin");
+let spinning = false;
+btnSpin.addEventListener("click", () => {
+  spinning = !spinning;
+  spinning ? viewer.startAutoRotate(-2) : viewer.stopAutoRotate();
+  btnSpin.setAttribute("aria-pressed", String(spinning));
+});
+
+/* полный экран */
+document.getElementById("btnFull").addEventListener("click", () => {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  else document.exitFullscreen();
+});
+</script>
+</body>
+</html>
