@@ -35,24 +35,34 @@
   .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;
     stroke-linecap:round;stroke-linejoin:round}
 
-  .hs{position:relative;width:66px;height:66px;cursor:pointer;display:grid;place-items:center}
-  .hs::before{content:"";position:absolute;inset:0;border-radius:50%;
+  .hs{position:relative;cursor:pointer;display:grid;place-items:center;
+    width:clamp(38px, calc(var(--ang,9) * var(--pxdeg,13) * 1px), 320px);
+    height:clamp(38px, calc(var(--ang,9) * var(--pxdeg,13) * 1px), 320px)}
+  /* уличные — обычный кружок */
+  .hs-css .hs-plate{position:absolute;inset:0;border-radius:50%;
     background:rgba(237,232,224,.90);box-shadow:0 6px 22px rgba(0,0,0,.42);
-    transition:transform .22s cubic-bezier(.34,1.4,.64,1),background .22s}
-  .hs::after{content:"";position:relative;width:16px;height:16px;
+    display:grid;place-items:center;transition:background .22s,transform .22s}
+  .hs-css .hs-plate::after{content:"";width:15px;height:15px;
     border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink);
     transform:rotate(-45deg) translate(-2px,-2px)}
-  .hs:hover::before{transform:scale(1.16);background:var(--moss)}
-  .hs-label{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);
+  .hs-css:hover .hs-plate{background:var(--moss);transform:scale(1.12)}
+  .hs-css:hover .hs-plate::after{border-color:#fff}
+  .hs-css.pulse .hs-plate{animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+  /* врезанные — стрелка уже в фотографии, тут только зона клика */
+  .hs-baked .hs-plate{position:absolute;inset:-8%;border-radius:50%;
+    border:2px solid transparent;transition:border-color .18s,background .18s}
+  .hs-baked:hover .hs-plate{border-color:rgba(237,232,224,.85);
+    background:rgba(63,107,79,.22)}
+  .hs-label{position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);
     white-space:nowrap;padding:5px 11px;border-radius:3px;background:var(--ink-soft);
     backdrop-filter:blur(10px);color:var(--fog);font-size:12.5px;font-weight:500;
     opacity:0;transition:opacity .2s;pointer-events:none}
   .hs:hover .hs-label{opacity:1}
-  .hs.pulse::before{animation:pulse 2.6s ease-in-out infinite}
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
   body.editing .hs{cursor:grab}
   body.editing .hs .hs-label{opacity:1}
-  body.editing .hs::before{background:var(--brass)}
+  body.editing .hs-baked .hs-plate{border-color:var(--brass);border-style:dashed}
+  body.editing .hs-css .hs-plate{background:var(--brass)}
   .hs.lifted{opacity:.22}
 
   /* маркер, который едет за курсором */
@@ -138,6 +148,7 @@
 <div id="edit">
   <h3>Правка стрелок</h3>
   <p class="sub" id="editStatus">—</p>
+  <p class="sub" style="color:#C2A76A">Внутри дома стрелки врезаны в фотографию. Правка двигает только зону клика — саму картинку перерисую я, когда пришлёшь разметку.</p>
   <div id="arrowList"></div>
   <select id="editTarget"><option value="">+ новая стрелка: куда ведёт?</option></select>
   <button class="btn" id="editCopy">Скопировать разметку</button>
@@ -159,7 +170,7 @@ const POINTS=[
  {id:"sanuzel2",title:"Санузел с душевой"},{id:"kotelnaya",title:"Котельная"}];
 
 /* ═══ 2) ПЕРЕХОДЫ ═══ */
-const BASE_LINKS={"prihozhaya":[{"to":"dvor","pitch":-32.6,"yaw":-171.8},{"to":"holl1","pitch":-25.6,"yaw":1.3}],"holl1":[{"to":"gostinaya","pitch":-27.7,"yaw":8.5},{"to":"sanuzel1","pitch":-12.8,"yaw":94.2},{"to":"kab1","pitch":-26.9,"yaw":-107.7},{"to":"kab2","pitch":-9.9,"yaw":105.5},{"to":"prihozhaya","pitch":-28.5,"yaw":168.2},{"to":"kab3","pitch":-16.6,"yaw":65.9}],"kab1":[{"to":"sanuzel2","pitch":-14.1,"yaw":131},{"to":"holl1","pitch":-28.3,"yaw":4.7}],"kab3":[{"to":"holl2","pitch":-18.5,"yaw":2.4}],"gostinaya":[{"to":"holl2","pitch":-20.6,"yaw":143.2},{"to":"kotelnaya","pitch":-9.1,"yaw":-129.2}],"holl2":[{"to":"sanuzel1","pitch":-21,"yaw":-165.9},{"to":"kab1","pitch":-5.5,"yaw":-18.1},{"to":"gostinaya","pitch":-15.6,"yaw":23.3},{"to":"kab2","pitch":-10.6,"yaw":-120},{"to":"prihozhaya","pitch":-17.9,"yaw":-42.5},{"to":"kab3","pitch":-16.7,"yaw":127.6}],"kab2":[{"to":"holl2","pitch":-24.1,"yaw":-146}],"sanuzel2":[{"to":"kab3","pitch":-22.5,"yaw":-166.6}],"kotelnaya":[{"to":"gostinaya","pitch":-10.3,"yaw":150.4},{"to":"uchastok","pitch":-11.6,"yaw":25.7}],"vhod":[{"to":"prihozhaya","pitch":4.4,"yaw":-76.5},{"to":"uchastok","pitch":4.8,"yaw":-147.7},{"to":"dvor","pitch":-3.2,"yaw":-174.5}],"dvor":[{"to":"vhod","pitch":-4.5,"yaw":46.8},{"to":"uchastok","pitch":-8.2,"yaw":-1.8}],"dorozhka":[{"to":"uchastok","pitch":-8.4,"yaw":73},{"to":"vhod","pitch":-13.6,"yaw":-49.3}],"uchastok":[{"to":"dorozhka","pitch":-11.9,"yaw":-65.3},{"to":"dvor","pitch":-18.4,"yaw":53.9},{"to":"kotelnaya","pitch":-21.7,"yaw":26.1}],"sanuzel1":[{"to":"holl2","pitch":-13.5,"yaw":137.4}]};
+const BASE_LINKS={"prihozhaya": [{"to": "dvor", "pitch": -12.8, "yaw": -171.8, "ang": 13.2, "baked": true}, {"to": "holl1", "pitch": -9.6, "yaw": 1.3, "ang": 9.9, "baked": true}], "holl1": [{"to": "gostinaya", "pitch": -10.6, "yaw": 8.5, "ang": 10.8, "baked": true}, {"to": "sanuzel1", "pitch": -4.6, "yaw": 94.2, "ang": 4.7, "baked": true}, {"to": "kab1", "pitch": -10.2, "yaw": -107.7, "ang": 10.5, "baked": true}, {"to": "kab2", "pitch": -3.9, "yaw": 105.5, "ang": 4.0, "baked": true}, {"to": "prihozhaya", "pitch": -10.9, "yaw": 168.2, "ang": 11.2, "baked": true}, {"to": "kab3", "pitch": -6.0, "yaw": 65.9, "ang": 6.2, "baked": true}], "kab1": [{"to": "sanuzel2", "pitch": -5.1, "yaw": 131, "ang": 5.2, "baked": true}, {"to": "holl1", "pitch": -10.8, "yaw": 4.7, "ang": 11.1, "baked": true}], "kab3": [{"to": "holl2", "pitch": -6.8, "yaw": 2.4, "ang": 6.9, "baked": true}], "gostinaya": [{"to": "holl2", "pitch": -7.6, "yaw": 143.2, "ang": 7.8, "baked": true}, {"to": "kotelnaya", "pitch": -3.9, "yaw": -129.2, "ang": 4.0, "baked": true}], "holl2": [{"to": "sanuzel1", "pitch": -7.8, "yaw": -165.9, "ang": 7.9, "baked": true}, {"to": "kab1", "pitch": -3.9, "yaw": -18.1, "ang": 4.0, "baked": true}, {"to": "gostinaya", "pitch": -5.7, "yaw": 23.3, "ang": 5.8, "baked": true}, {"to": "kab2", "pitch": -3.9, "yaw": -120, "ang": 4.0, "baked": true}, {"to": "prihozhaya", "pitch": -6.5, "yaw": -42.5, "ang": 6.7, "baked": true}, {"to": "kab3", "pitch": -6.1, "yaw": 127.6, "ang": 6.2, "baked": true}], "kab2": [{"to": "holl2", "pitch": -9.0, "yaw": -146, "ang": 9.2, "baked": true}], "sanuzel2": [{"to": "kab3", "pitch": -8.4, "yaw": -166.6, "ang": 8.6, "baked": true}], "kotelnaya": [{"to": "gostinaya", "pitch": -3.9, "yaw": 150.4, "ang": 4.0, "baked": true}, {"to": "uchastok", "pitch": -4.2, "yaw": 25.7, "ang": 4.2, "baked": true}], "vhod": [{"to": "prihozhaya", "pitch": 4.4, "yaw": -76.5, "baked": false}, {"to": "uchastok", "pitch": 4.8, "yaw": -147.7, "baked": false}, {"to": "dvor", "pitch": -3.2, "yaw": -174.5, "baked": false}], "dvor": [{"to": "vhod", "pitch": -4.5, "yaw": 46.8, "baked": false}, {"to": "uchastok", "pitch": -8.2, "yaw": -1.8, "baked": false}], "dorozhka": [{"to": "uchastok", "pitch": -8.4, "yaw": 73, "baked": false}, {"to": "vhod", "pitch": -13.6, "yaw": -49.3, "baked": false}], "uchastok": [{"to": "dorozhka", "pitch": -11.9, "yaw": -65.3, "baked": false}, {"to": "dvor", "pitch": -18.4, "yaw": 53.9, "baked": false}, {"to": "kotelnaya", "pitch": -21.7, "yaw": 26.1, "baked": false}], "sanuzel1": [{"to": "holl2", "pitch": -4.9, "yaw": 137.4, "ang": 5.0, "baked": true}]};
 
 /* ─────────────────────────────────── */
 const KEY="tourLinks.v3";
@@ -173,17 +184,21 @@ const $=id=>document.getElementById(id);
 
 function startYaw(id){const a=LINKS[id]; return a&&a.length?a[0].yaw:0;}
 
-function tooltip(div,text){
+function tooltip(div,args){
   div.classList.add("hs");
-  if(!editing) div.classList.add("pulse");
-  const s=document.createElement("span");
-  s.className="hs-label"; s.textContent=text; div.appendChild(s);
+  div.classList.add(args.baked?"hs-baked":"hs-css");
+  if(!editing && !args.baked) div.classList.add("pulse");
+  div.style.setProperty("--ang", args.ang||9);
+  var plate=document.createElement("div"); plate.className="hs-plate";
+  div.appendChild(plate);
+  var s=document.createElement("span");
+  s.className="hs-label"; s.textContent=args.title; div.appendChild(s);
 }
 function hotspotsFor(id){
   return (LINKS[id]||[]).map((l,i)=>({
     id:"hs"+i, pitch:l.pitch, yaw:l.yaw,
     type: editing?"info":"scene", sceneId:l.to, cssClass:"hs",
-    createTooltipFunc:tooltip, createTooltipArgs:byId[l.to]||l.to,
+    createTooltipFunc:tooltip, createTooltipArgs:{title:(byId[l.to]||l.to),ang:l.ang,baked:!!l.baked},
     clickHandlerFunc: editing?function(){}:undefined
   }));
 }
@@ -213,6 +228,17 @@ function paintRoom(){ $("roomName").textContent=byId[current]||current; }
 
 makeViewer(POINTS[0].id);
 paintRoom();
+
+/* зоны клика растут вместе с картинкой при зуме */
+(function zoomLoop(){
+  if(viewer){
+    try{
+      var pxdeg=window.innerWidth/viewer.getHfov();
+      document.documentElement.style.setProperty("--pxdeg", pxdeg.toFixed(3));
+    }catch(e){}
+  }
+  requestAnimationFrame(zoomLoop);
+})();
 
 /* ---------- меню ---------- */
 const sheet=$("sheet"), sb=$("sheetBody");
