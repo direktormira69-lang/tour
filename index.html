@@ -11,97 +11,124 @@
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#12100E;
-    --ink-soft:rgba(18,16,14,.72);
-    --fog:#EDE8E0;
-    --fog-dim:rgba(237,232,224,.58);
-    --moss:#3F6B4F;
-    --brass:#C2A76A;
-    --rail-h:104px;
+    --ink:#12100E; --ink-soft:rgba(18,16,14,.72);
+    --fog:#EDE8E0; --fog-dim:rgba(237,232,224,.58);
+    --moss:#3F6B4F; --brass:#C2A76A;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;
     font-family:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;
     -webkit-font-smoothing:antialiased}
-
-  #stage{position:absolute;inset:0 0 var(--rail-h) 0}
-  #pano{width:100%;height:100%}
+  #pano{position:absolute;inset:0}
   .pnlm-load-box,.pnlm-about-msg{display:none!important}
   .pnlm-container{background:var(--ink)!important}
 
-  /* --- шапка --- */
   .plate{position:absolute;top:18px;left:18px;z-index:5;pointer-events:none;
-    padding:11px 16px 12px;border-radius:3px;
-    background:var(--ink-soft);backdrop-filter:blur(14px);
-    border-left:2px solid var(--brass)}
+    padding:11px 16px 12px;border-radius:3px;background:var(--ink-soft);
+    backdrop-filter:blur(14px);border-left:2px solid var(--brass)}
   .plate .eyebrow{margin:0;font-size:10px;font-weight:500;letter-spacing:.16em;
     text-transform:uppercase;color:var(--fog-dim)}
   .plate .room{margin:5px 0 0;font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--fog)}
 
-  /* --- кнопки --- */
   .tools{position:absolute;top:18px;right:18px;z-index:5;display:flex;gap:7px}
   .tools button{width:42px;height:42px;border:0;border-radius:3px;cursor:pointer;
     background:var(--ink-soft);backdrop-filter:blur(14px);color:var(--fog);
-    display:grid;place-items:center;transition:background .18s,color .18s}
+    display:grid;place-items:center;transition:background .18s}
   .tools button:hover{background:var(--moss)}
   .tools button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
-  .tools button[aria-pressed="true"]{background:var(--moss);color:#fff}
+  .tools button[aria-pressed="true"]{background:var(--moss)}
   .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;
     stroke-linecap:round;stroke-linejoin:round}
 
-  /* --- лента помещений --- */
-  #rail{position:absolute;left:0;right:0;bottom:0;height:var(--rail-h);z-index:6;
-    display:flex;align-items:stretch;gap:0;overflow-x:auto;overflow-y:hidden;
-    background:#0C0B0A;border-top:1px solid rgba(194,167,106,.22);
-    scrollbar-width:none}
-  #rail::-webkit-scrollbar{display:none}
+  /* ---------- СТРЕЛКА-ПЕРЕХОД ---------- */
+  .hs{position:relative;width:66px;height:66px;cursor:pointer;
+    display:grid;place-items:center}
+  .hs::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:rgba(237,232,224,.90);
+    box-shadow:0 6px 22px rgba(0,0,0,.42);
+    transition:transform .22s cubic-bezier(.34,1.4,.64,1), background .22s}
+  .hs::after{content:"";position:relative;width:16px;height:16px;
+    border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink);
+    transform:rotate(-45deg) translate(-2px,-2px);transition:border-color .22s}
+  .hs:hover::before{transform:scale(1.16);background:var(--moss)}
+  .hs:hover::after{border-color:#fff}
+  .hs-label{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);
+    white-space:nowrap;padding:5px 11px;border-radius:3px;
+    background:var(--ink-soft);backdrop-filter:blur(10px);
+    color:var(--fog);font-size:12.5px;font-weight:500;
+    opacity:0;transition:opacity .2s;pointer-events:none}
+  .hs:hover .hs-label{opacity:1}
+  .hs.pulse::before{animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 
-  .zone{display:flex;align-items:center;padding:0 14px;flex:0 0 auto;
-    font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--fog-dim);writing-mode:vertical-rl;transform:rotate(180deg);
-    border-right:1px solid rgba(237,232,224,.09)}
+  /* ---------- МЕНЮ ПОМЕЩЕНИЙ ---------- */
+  #sheet{position:absolute;inset:0;z-index:8;background:rgba(12,11,10,.94);
+    backdrop-filter:blur(8px);padding:74px 26px 26px;overflow:auto;display:none}
+  #sheet.open{display:block}
+  #sheet h2{margin:0 0 18px;font-size:11px;font-weight:500;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--fog-dim)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    margin-bottom:26px}
+  .grid button{position:relative;border:0;padding:0;cursor:pointer;background:none;
+    border-radius:3px;overflow:hidden;aspect-ratio:2/1;opacity:.72;transition:opacity .18s}
+  .grid button:hover{opacity:1}
+  .grid button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+  .grid img{width:100%;height:100%;object-fit:cover;display:block}
+  .grid span{position:absolute;left:0;right:0;bottom:0;padding:18px 10px 8px;
+    font-size:12.5px;font-weight:500;color:var(--fog);text-align:left;
+    background:linear-gradient(to top,rgba(12,11,10,.94),transparent)}
+  #closeSheet{position:absolute;top:18px;right:18px;width:42px;height:42px;
+    border:0;border-radius:3px;background:rgba(237,232,224,.12);color:var(--fog);
+    cursor:pointer;font-size:22px;line-height:1}
 
-  .card{flex:0 0 auto;width:152px;position:relative;border:0;padding:0;cursor:pointer;
-    background:none;overflow:hidden;border-right:1px solid rgba(237,232,224,.09);
-    opacity:.5;transition:opacity .2s}
-  .card img{display:block;width:100%;height:100%;object-fit:cover}
-  .card figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 9px 7px;
-    font-size:11.5px;font-weight:500;color:var(--fog);text-align:left;line-height:1.25;
-    background:linear-gradient(to top,rgba(12,11,10,.92),transparent)}
-  .card:hover{opacity:.85}
-  .card:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
-  .card[aria-current="true"]{opacity:1}
-  .card[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;top:0;
-    height:3px;background:var(--moss)}
+  /* ---------- РЕЖИМ РАЗМЕТКИ ---------- */
+  #edit{position:absolute;left:18px;bottom:18px;z-index:9;width:330px;max-width:calc(100vw - 36px);
+    background:#0C0B0A;border:1px solid rgba(194,167,106,.3);border-radius:4px;
+    padding:14px;color:var(--fog);font-size:13px;display:none}
+  #edit.on{display:block}
+  #edit h3{margin:0 0 4px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brass);font-weight:600}
+  #edit p{margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--fog-dim)}
+  #edit select,#edit textarea,#edit button{width:100%;font-family:inherit;font-size:13px}
+  #edit select{padding:8px;background:#1A1815;color:var(--fog);
+    border:1px solid rgba(237,232,224,.2);border-radius:3px;margin-bottom:8px}
+  #edit textarea{height:90px;background:#1A1815;color:var(--fog);border:1px solid rgba(237,232,224,.2);
+    border-radius:3px;padding:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    margin-bottom:8px;resize:vertical}
+  #edit button{padding:9px;border:0;border-radius:3px;background:var(--moss);color:#fff;
+    cursor:pointer;font-weight:500;margin-bottom:6px}
+  #edit button.ghost{background:rgba(237,232,224,.12);color:var(--fog)}
+  #editHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7;
+    padding:10px 18px;border-radius:3px;background:var(--ink-soft);color:var(--fog);
+    font-size:13px;pointer-events:none;opacity:0;transition:opacity .3s}
+  #editHint.show{opacity:1}
 
-  /* --- заставка --- */
-  #splash{position:absolute;inset:0;z-index:9;display:grid;place-items:center;
-    background:var(--ink);color:var(--fog-dim);font-size:13px;letter-spacing:.05em;
-    transition:opacity .5s}
+  #splash{position:absolute;inset:0;z-index:10;display:grid;place-items:center;
+    background:var(--ink);color:var(--fog-dim);font-size:13px;transition:opacity .5s}
   #splash.gone{opacity:0;pointer-events:none}
 
   @media (max-width:640px){
-    :root{--rail-h:88px}
-    .card{width:120px}
+    .hs{width:56px;height:56px}
     .plate .room{font-size:16px}
     .plate{top:12px;left:12px}
     .tools{top:12px;right:12px}
   }
-  @media (prefers-reduced-motion:reduce){
-    *{transition:none!important}
-  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<div id="stage"><div id="pano"></div></div>
+<div id="pano"></div>
 
 <div class="plate">
   <p class="eyebrow">Виртуальный тур</p>
-  <p class="room" id="roomName">Вход в дом</p>
+  <p class="room" id="roomName">—</p>
 </div>
 
 <div class="tools">
+  <button id="btnMenu" title="Все помещения" aria-label="Все помещения">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
   <button id="btnSpin" aria-pressed="false" title="Автоповорот" aria-label="Автоповорот">
     <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4h-4"/></svg>
   </button>
@@ -110,107 +137,193 @@
   </button>
 </div>
 
-<nav id="rail" aria-label="Помещения"></nav>
+<div id="sheet">
+  <button id="closeSheet" aria-label="Закрыть">&times;</button>
+  <div id="sheetBody"></div>
+</div>
+
+<div id="editHint"></div>
+
+<div id="edit">
+  <h3>Режим разметки</h3>
+  <p id="editStatus">Кликни на дверь в панораме.</p>
+  <select id="editTarget"><option value="">— выбери, куда ведёт дверь —</option></select>
+  <button id="editUndo" class="ghost">Убрать последнюю стрелку</button>
+  <button id="editCopy">Скопировать разметку</button>
+  <textarea id="editOut" readonly></textarea>
+</div>
 
 <div id="splash">Загружаем панораму…</div>
 
 <script>
-/* ─────────────────────────────────────────────
-   СПИСОК ТОЧЕК ТУРА
-   Порядок здесь = порядок в ленте внизу.
-   Чтобы переименовать помещение — правь title.
-   Чтобы заменить фото — положи новый файл
-   с тем же именем в папку pano/ и thumb/.
-   ───────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   1) ТОЧКИ ТУРА. Правь title — меняется название комнаты.
+   ══════════════════════════════════════════════════════ */
 const POINTS = [
-  {id:"vhod",       title:"Вход в дом",          zone:"Снаружи"},
-  {id:"dvor",       title:"Двор и парковка",     zone:"Снаружи"},
-  {id:"dorozhka",   title:"Дорожка вдоль дома",  zone:"Снаружи"},
-  {id:"uchastok",   title:"Участок",             zone:"Снаружи"},
-  {id:"prihozhaya", title:"Прихожая",            zone:"Внутри"},
-  {id:"holl1",      title:"Холл у входа",        zone:"Внутри"},
-  {id:"holl2",      title:"Центральный холл",    zone:"Внутри"},
-  {id:"gostinaya",  title:"Кухня-гостиная",      zone:"Внутри"},
-  {id:"kab1",       title:"Кабинет с диваном",   zone:"Внутри"},
-  {id:"kab2",       title:"Кабинет с панорамой", zone:"Внутри"},
-  {id:"kab3",       title:"Рабочая комната",     zone:"Внутри"},
-  {id:"sanuzel1",   title:"Санузел с ванной",    zone:"Внутри"},
-  {id:"sanuzel2",   title:"Санузел с душевой",   zone:"Внутри"},
-  {id:"kotelnaya",  title:"Котельная",           zone:"Внутри"}
+  {id:"vhod",       title:"Вход в дом"},
+  {id:"dvor",       title:"Двор и парковка"},
+  {id:"dorozhka",   title:"Дорожка вдоль дома"},
+  {id:"uchastok",   title:"Участок"},
+  {id:"prihozhaya", title:"Прихожая"},
+  {id:"holl1",      title:"Холл у входа"},
+  {id:"holl2",      title:"Центральный холл"},
+  {id:"gostinaya",  title:"Кухня-гостиная"},
+  {id:"kab1",       title:"Кабинет с диваном"},
+  {id:"kab2",       title:"Кабинет с панорамой"},
+  {id:"kab3",       title:"Рабочая комната"},
+  {id:"sanuzel1",   title:"Санузел с ванной"},
+  {id:"sanuzel2",   title:"Санузел с душевой"},
+  {id:"kotelnaya",  title:"Котельная"}
 ];
+
+/* ══════════════════════════════════════════════════════
+   2) ПЕРЕХОДЫ. Сюда вставляется разметка из режима правки.
+   ══════════════════════════════════════════════════════ */
+const LINKS = {};
+
+/* ────────────────────────────────────────────────────── */
+const EDIT = new URLSearchParams(location.search).has("edit");
+const byId = Object.fromEntries(POINTS.map(p => [p.id, p.title]));
+
+function tooltip(div, text){
+  div.classList.add("hs");
+  if (!EDIT) div.classList.add("pulse");
+  const s = document.createElement("span");
+  s.className = "hs-label";
+  s.textContent = text;
+  div.appendChild(s);
+}
+
+function hotspotsFor(sceneId){
+  return (LINKS[sceneId] || []).map((l, i) => ({
+    id: sceneId + "-" + i,
+    pitch: l.pitch, yaw: l.yaw,
+    type: EDIT ? "info" : "scene",
+    sceneId: l.to,
+    cssClass: "hs",
+    createTooltipFunc: tooltip,
+    createTooltipArgs: byId[l.to] || l.to,
+    clickHandlerFunc: EDIT ? () => {} : undefined
+  }));
+}
 
 const scenes = {};
 POINTS.forEach(p => {
   scenes[p.id] = {
-    type: "equirectangular",
-    panorama: "pano/" + p.id + ".jpg",
-    hfov: 100, minHfov: 45, maxHfov: 120, pitch: 0, yaw: 0
+    type:"equirectangular", panorama:"pano/"+p.id+".jpg",
+    hfov:100, minHfov:45, maxHfov:120, pitch:0, yaw:0,
+    hotSpots: hotspotsFor(p.id)
   };
 });
 
 const viewer = pannellum.viewer("pano", {
-  default: {
-    firstScene: POINTS[0].id,
-    sceneFadeDuration: 700,
-    autoLoad: true,
-    showControls: false,
-    compass: false,
-    keyboardZoom: true,
-    friction: 0.16,
-    backgroundColor: [0.07, 0.06, 0.055]
-  },
+  default:{ firstScene:POINTS[0].id, sceneFadeDuration:700, autoLoad:true,
+            showControls:false, compass:false, friction:0.16,
+            backgroundColor:[0.07,0.06,0.055] },
   scenes: scenes
 });
 
-/* лента помещений */
-const rail = document.getElementById("rail");
-let lastZone = null;
-POINTS.forEach(p => {
-  if (p.zone !== lastZone) {
-    const z = document.createElement("div");
-    z.className = "zone";
-    z.textContent = p.zone;
-    rail.appendChild(z);
-    lastZone = p.zone;
-  }
-  const b = document.createElement("button");
-  b.className = "card";
-  b.dataset.id = p.id;
-  b.innerHTML = '<img src="thumb/' + p.id + '.jpg" alt="" loading="lazy">' +
-                '<figcaption>' + p.title + '</figcaption>';
-  b.addEventListener("click", () => viewer.loadScene(p.id));
-  rail.appendChild(b);
-});
-
-function markActive(id) {
-  const p = POINTS.find(x => x.id === id);
-  if (p) document.getElementById("roomName").textContent = p.title;
-  rail.querySelectorAll(".card").forEach(c => {
-    const on = c.dataset.id === id;
-    c.setAttribute("aria-current", on ? "true" : "false");
-    if (on) c.scrollIntoView({block:"nearest", inline:"nearest", behavior:"smooth"});
-  });
+let current = POINTS[0].id;
+function setRoom(id){
+  current = id;
+  document.getElementById("roomName").textContent = byId[id] || id;
 }
-
-viewer.on("scenechange", markActive);
+viewer.on("scenechange", setRoom);
 viewer.on("load", () => document.getElementById("splash").classList.add("gone"));
-markActive(POINTS[0].id);
+setRoom(POINTS[0].id);
 
-/* автоповорот */
+/* ---------- меню помещений ---------- */
+const sheet = document.getElementById("sheet");
+const body  = document.getElementById("sheetBody");
+const h2 = document.createElement("h2"); h2.textContent = "Все помещения"; body.appendChild(h2);
+const grid = document.createElement("div"); grid.className = "grid"; body.appendChild(grid);
+POINTS.forEach(p => {
+  const b = document.createElement("button");
+  b.innerHTML = '<img src="thumb/'+p.id+'.jpg" alt="" loading="lazy"><span>'+p.title+'</span>';
+  b.onclick = () => { viewer.loadScene(p.id); sheet.classList.remove("open"); };
+  grid.appendChild(b);
+});
+document.getElementById("btnMenu").onclick = () => sheet.classList.add("open");
+document.getElementById("closeSheet").onclick = () => sheet.classList.remove("open");
+document.addEventListener("keydown", e => { if (e.key === "Escape") sheet.classList.remove("open"); });
+
+/* ---------- автоповорот / полный экран ---------- */
 const btnSpin = document.getElementById("btnSpin");
 let spinning = false;
-btnSpin.addEventListener("click", () => {
+btnSpin.onclick = () => {
   spinning = !spinning;
   spinning ? viewer.startAutoRotate(-2) : viewer.stopAutoRotate();
   btnSpin.setAttribute("aria-pressed", String(spinning));
-});
-
-/* полный экран */
-document.getElementById("btnFull").addEventListener("click", () => {
+};
+document.getElementById("btnFull").onclick = () => {
   const el = document.documentElement;
-  if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  if (!document.fullscreenElement) (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
   else document.exitFullscreen();
-});
+};
+
+/* ══════════════════════════════════════════════════════
+   РЕЖИМ РАЗМЕТКИ  —  открывается адресом ?edit
+   ══════════════════════════════════════════════════════ */
+if (EDIT) {
+  const panel  = document.getElementById("edit");
+  const target = document.getElementById("editTarget");
+  const status = document.getElementById("editStatus");
+  const out    = document.getElementById("editOut");
+  const hint   = document.getElementById("editHint");
+  panel.classList.add("on");
+
+  POINTS.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.id; o.textContent = p.title;
+    target.appendChild(o);
+  });
+
+  function flash(msg){
+    hint.textContent = msg; hint.classList.add("show");
+    clearTimeout(flash.t); flash.t = setTimeout(() => hint.classList.remove("show"), 1600);
+  }
+  function dump(){ out.value = JSON.stringify(LINKS); }
+  function redraw(){
+    (LINKS[current] || []).forEach((_, i) => {
+      try { viewer.removeHotSpot(current + "-" + i, current); } catch(e){}
+    });
+    hotspotsFor(current).forEach(h => viewer.addHotSpot(h, current));
+    dump();
+    const n = (LINKS[current] || []).length;
+    status.textContent = "«" + byId[current] + "» — стрелок: " + n;
+  }
+  viewer.on("scenechange", () => setTimeout(redraw, 60));
+
+  document.getElementById("pano").addEventListener("click", e => {
+    if (e.target.closest(".hs")) return;
+    const to = target.value;
+    if (!to) { flash("Сначала выбери комнату в списке слева"); return; }
+    if (to === current) { flash("Это та же комната"); return; }
+    const c = viewer.mouseEventToCoords(e);
+    (LINKS[current] = LINKS[current] || []).push({
+      to: to, pitch: +c[0].toFixed(1), yaw: +c[1].toFixed(1)
+    });
+    redraw();
+    flash("Стрелка → " + byId[to]);
+  });
+
+  document.getElementById("editUndo").onclick = () => {
+    if (!LINKS[current] || !LINKS[current].length) { flash("Тут стрелок нет"); return; }
+    LINKS[current].pop();
+    if (!LINKS[current].length) delete LINKS[current];
+    redraw();
+  };
+
+  document.getElementById("editCopy").onclick = () => {
+    dump();
+    out.select();
+    navigator.clipboard ? navigator.clipboard.writeText(out.value).then(
+      () => flash("Скопировано"), () => flash("Выдели текст внизу и скопируй вручную")
+    ) : flash("Выдели текст внизу и скопируй вручную");
+  };
+
+  setTimeout(redraw, 400);
+}
 </script>
 </body>
 </html>
