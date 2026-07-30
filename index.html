@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#12100E;--ink-soft:rgba(18,16,14,.72);--fog:#EDE8E0;
-        --fog-dim:rgba(237,232,224,.58);--moss:#3F6B4F;--brass:#C2A76A;--paw:#1C282F;--pxdeg:13}
+        --fog-dim:rgba(237,232,224,.58);--moss:#3F6B4F;--brass:#C2A76A}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;
     font-family:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -17,14 +17,32 @@
   .pnlm-load-box,.pnlm-about-msg{display:none!important}
   .pnlm-container{background:var(--ink)!important}
 
-  .plate{position:absolute;top:18px;left:18px;z-index:5;pointer-events:none;
+  /* ── слой зон клика: поверх панорамы, вне движка ── */
+  #hits{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+  .hit{position:absolute;border:0;padding:0;margin:0;background:transparent;
+    border-radius:50%;pointer-events:auto;cursor:pointer;
+    transform:translate(-50%,-50%);
+    outline:2px solid transparent;transition:background .15s,outline-color .15s,box-shadow .15s}
+  .hit:hover{background:rgba(63,107,79,.30);outline-color:rgba(240,236,228,.95);
+    box-shadow:0 0 0 5px rgba(63,107,79,.20)}
+  .hit:focus-visible{outline-color:var(--brass)}
+  .hit .cap{position:absolute;left:50%;top:100%;transform:translate(-50%,8px);
+    white-space:nowrap;padding:5px 11px;border-radius:3px;background:var(--ink-soft);
+    backdrop-filter:blur(10px);color:var(--fog);font-size:12.5px;font-weight:500;
+    opacity:0;transition:opacity .18s;pointer-events:none}
+  .hit:hover .cap{opacity:1}
+  body.editing .hit{outline-color:var(--brass);outline-style:dashed}
+  body.editing .hit .cap{opacity:1}
+  .hit.sel{background:rgba(194,167,106,.45);outline:3px solid #fff}
+
+  .plate{position:absolute;top:18px;left:18px;z-index:6;pointer-events:none;
     padding:11px 16px 12px;border-radius:3px;background:var(--ink-soft);
     backdrop-filter:blur(14px);border-left:2px solid var(--brass)}
   .plate .eyebrow{margin:0;font-size:10px;font-weight:500;letter-spacing:.16em;
     text-transform:uppercase;color:var(--fog-dim)}
   .plate .room{margin:5px 0 0;font-size:19px;font-weight:600;color:var(--fog)}
 
-  .tools{position:absolute;top:18px;right:18px;z-index:5;display:flex;gap:7px}
+  .tools{position:absolute;top:18px;right:18px;z-index:6;display:flex;gap:7px}
   .tools button{width:42px;height:42px;border:0;border-radius:3px;cursor:pointer;
     background:var(--ink-soft);backdrop-filter:blur(14px);color:var(--fog);
     display:grid;place-items:center;transition:background .18s}
@@ -32,38 +50,6 @@
   .tools button[aria-pressed="true"]{background:var(--brass);color:#12100E}
   .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;
     stroke-linecap:round;stroke-linejoin:round}
-
-  /* ── стрелка: размер = угловой размер × пикселей на градус ── */
-  .hs{position:relative;cursor:pointer;display:grid;place-items:center;
-    width:clamp(46px, calc(var(--ang,9) * var(--pxdeg) * 1.15px), 420px);
-    height:clamp(46px, calc(var(--ang,9) * var(--pxdeg) * 1.15px), 420px)}
-  .hs .disc{position:absolute;inset:0;border-radius:50%;
-    background:transparent;
-    border:2px solid transparent;
-    display:grid;place-items:center;transition:background .2s,border-color .2s}
-  .hs .disc .paw{width:56%;height:56%;background:transparent;transition:background .2s;
-    -webkit-mask:url(paw.png) center/contain no-repeat;
-    mask:url(paw.png) center/contain no-repeat}
-  .hs:hover .disc{background:rgba(63,107,79,.30);border-color:rgba(240,236,228,.95);
-    box-shadow:0 0 0 4px rgba(63,107,79,.22)}
-  .hs:hover .disc .paw{background:transparent}
-  .hs-label{position:absolute;top:104%;left:50%;transform:translateX(-50%);
-    white-space:nowrap;padding:5px 11px;border-radius:3px;background:var(--ink-soft);
-    backdrop-filter:blur(10px);color:var(--fog);font-size:12.5px;font-weight:500;
-    opacity:0;transition:opacity .2s;pointer-events:none}
-  .hs:hover .hs-label{opacity:1}
-  body.editing .hs{cursor:grab}
-  body.editing .hs .hs-label{opacity:1}
-  body.editing .hs .disc{outline:2px dashed var(--brass);outline-offset:3px}
-  .hs.lifted{opacity:.2}
-  .hs.sel .disc{background:var(--brass);outline:3px solid #fff;outline-offset:4px}
-  .hs.sel .disc .paw{background:#12100E}
-  #ghost{position:fixed;z-index:20;border-radius:50%;background:var(--moss);
-    box-shadow:0 8px 26px rgba(0,0,0,.5);display:none;place-items:center;pointer-events:none}
-  #ghost.on{display:grid}
-  #ghost .paw{width:56%;height:56%;background:#fff;
-    -webkit-mask:url(paw.png) center/contain no-repeat;
-    mask:url(paw.png) center/contain no-repeat}
 
   #sheet{position:absolute;inset:0;z-index:8;background:rgba(12,11,10,.94);
     backdrop-filter:blur(8px);padding:74px 26px 26px;overflow:auto;display:none}
@@ -80,7 +66,7 @@
   #closeSheet{position:absolute;top:18px;right:18px;width:42px;height:42px;border:0;
     border-radius:3px;background:rgba(237,232,224,.12);color:var(--fog);cursor:pointer;font-size:22px}
 
-  #edit{position:absolute;left:18px;bottom:18px;z-index:9;width:352px;
+  #edit{position:absolute;left:18px;bottom:18px;z-index:9;width:340px;
     max-width:calc(100vw - 36px);max-height:calc(100vh - 120px);overflow:auto;
     background:#0C0B0A;border:1px solid rgba(194,167,106,.35);border-radius:4px;
     padding:14px;color:var(--fog);font-size:13px;display:none}
@@ -91,20 +77,15 @@
   .row{display:flex;align-items:center;gap:6px;padding:6px 0;
     border-bottom:1px solid rgba(237,232,224,.09);font-size:12.5px}
   .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .row .co{color:var(--fog-dim);font-size:10.5px;font-family:ui-monospace,Menlo,monospace;
-    white-space:nowrap}
-  .row button{border:0;width:23px;height:23px;border-radius:3px;cursor:pointer;
-    flex:0 0 auto;background:rgba(237,232,224,.13);color:var(--fog);line-height:1;font-size:14px}
+  .row .co{color:var(--fog-dim);font-size:10.5px;font-family:ui-monospace,Menlo,monospace}
+  .row button{border:0;width:23px;height:23px;border-radius:3px;cursor:pointer;flex:0 0 auto;
+    background:rgba(237,232,224,.13);color:var(--fog);line-height:1;font-size:14px}
   .row button.del{background:rgba(255,90,70,.18);color:#FF9B8A}
-  #edit select,#edit textarea,#edit .btn{width:100%;font-family:inherit;font-size:13px}
-  #edit select{padding:8px;background:#1A1815;color:var(--fog);
-    border:1px solid rgba(237,232,224,.2);border-radius:3px;margin:11px 0 8px}
-  #edit textarea{height:76px;background:#1A1815;color:var(--fog);
+  #edit textarea{width:100%;height:76px;background:#1A1815;color:var(--fog);
     border:1px solid rgba(237,232,224,.2);border-radius:3px;padding:8px;
-    font-family:ui-monospace,Menlo,monospace;font-size:10px;margin-top:8px;resize:vertical}
-  #edit .btn{padding:9px;border:0;border-radius:3px;background:var(--moss);color:#fff;
-    cursor:pointer;font-weight:500;margin-bottom:6px;display:block}
-  #edit .btn.ghost{background:rgba(237,232,224,.12);color:var(--fog)}
+    font-family:ui-monospace,Menlo,monospace;font-size:10px;margin-top:8px}
+  #edit .btn{width:100%;padding:9px;border:0;border-radius:3px;background:var(--moss);
+    color:#fff;cursor:pointer;font-weight:500;margin-bottom:6px;font-family:inherit;font-size:13px}
   #hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7;
     padding:10px 18px;border-radius:3px;background:var(--ink-soft);color:var(--fog);
     font-size:13px;pointer-events:none;opacity:0;transition:opacity .3s}
@@ -117,7 +98,7 @@
 </head>
 <body>
 <div id="pano"></div>
-<div id="ghost"><div class="paw"></div></div>
+<div id="hits"></div>
 
 <div class="plate"><p class="eyebrow">Виртуальный тур</p><p class="room" id="roomName">—</p></div>
 
@@ -136,13 +117,11 @@
 <div id="hint"></div>
 
 <div id="edit">
-  <h3>Правка стрелок</h3>
+  <h3>Правка лапок</h3>
   <p class="sub" id="editStatus">—</p>
-  <p class="sub" style="color:#C2A76A">Кликни лапку — она станет золотой. Кликни в новое место — переедет. Стрелки на клавиатуре двигают точнее, Shift — крупнее шаг. Выше = дальше = мельче.</p>
+  <p class="sub" style="color:#C2A76A">Лапки врезаны в фотографии. Правка двигает только зону клика — саму лапку перерисую я по новой разметке.</p>
   <div id="arrowList"></div>
-  <select id="editTarget"><option value="">+ новая стрелка: куда ведёт?</option></select>
   <button class="btn" id="editCopy">Скопировать разметку</button>
-  <button class="btn ghost" id="editReset">Вернуть исходную</button>
   <textarea id="editOut" readonly></textarea>
 </div>
 
@@ -160,83 +139,84 @@ const POINTS=[
 
 const BASE_LINKS={"vhod": [{"to": "dvor", "pitch": -1.4, "yaw": -176.4, "ang": 7.0}, {"to": "prihozhaya", "pitch": 1.2, "yaw": -78.8, "ang": 7.0}, {"to": "uchastok", "pitch": -1.4, "yaw": 4.2, "ang": 7.0}], "dvor": [{"to": "vhod", "pitch": -3.0, "yaw": 40.2, "ang": 7.0}, {"to": "uchastok", "pitch": -3.0, "yaw": -57.5, "ang": 7.0}], "dorozhka": [{"to": "vhod", "pitch": -0.2, "yaw": -51.1, "ang": 7.0}, {"to": "uchastok", "pitch": -0.1, "yaw": 49.6, "ang": 7.0}], "uchastok": [{"to": "dvor", "pitch": -0.3, "yaw": 43.8, "ang": 7.0}, {"to": "dorozhka", "pitch": -0.3, "yaw": -54.1, "ang": 7.0}, {"to": "kotelnaya", "pitch": -0.3, "yaw": 26.1, "ang": 7.0}], "prihozhaya": [{"to": "holl1", "pitch": -10.7, "yaw": 1.4, "ang": 12.2}, {"to": "dvor", "pitch": -9.2, "yaw": -177.2, "ang": 10.4}], "holl1": [{"to": "kab3", "pitch": -5.8, "yaw": 64.6, "ang": 6.6}, {"to": "sanuzel1", "pitch": -5.8, "yaw": 90.4, "ang": 6.6}, {"to": "kab1", "pitch": -5.7, "yaw": -102.1, "ang": 6.4}, {"to": "gostinaya", "pitch": -5.8, "yaw": -1.3, "ang": 6.6}, {"to": "kab2", "pitch": -5.8, "yaw": 116.9, "ang": 6.6}, {"to": "prihozhaya", "pitch": -5.8, "yaw": -177.6, "ang": 6.6}], "holl2": [{"to": "kab2", "pitch": -9.5, "yaw": -120.2, "ang": 10.8}, {"to": "prihozhaya", "pitch": -9.5, "yaw": -40.8, "ang": 10.8}, {"to": "kab3", "pitch": -11.5, "yaw": 122.3, "ang": 13.1}, {"to": "kab1", "pitch": -9.5, "yaw": -8.2, "ang": 10.8}, {"to": "sanuzel1", "pitch": -9.5, "yaw": -178.6, "ang": 10.8}, {"to": "gostinaya", "pitch": -9.4, "yaw": 44.4, "ang": 10.7}], "gostinaya": [{"to": "kotelnaya", "pitch": -6.6, "yaw": -129.7, "ang": 7.5}, {"to": "holl2", "pitch": -6.6, "yaw": 141.4, "ang": 7.5}], "kab1": [{"to": "sanuzel2", "pitch": -10.4, "yaw": 125.6, "ang": 11.8}, {"to": "holl1", "pitch": -10.5, "yaw": -3.4, "ang": 11.9}], "kab2": [{"to": "holl2", "pitch": -12.4, "yaw": -139.3, "ang": 14.1}], "kab3": [{"to": "holl2", "pitch": -8.9, "yaw": 2.8, "ang": 10.1}], "sanuzel1": [{"to": "holl2", "pitch": -9.4, "yaw": 135.1, "ang": 10.7}], "sanuzel2": [{"to": "kab3", "pitch": -17.8, "yaw": -173.3, "ang": 20.5}], "kotelnaya": [{"to": "gostinaya", "pitch": -7.0, "yaw": 148.5, "ang": 7.9}, {"to": "uchastok", "pitch": -7.0, "yaw": 44.4, "ang": 7.9}]};
 
-/* геометрия: угол наклона -> расстояние -> угловой размер */
-const H_EYE=1.55, H_MARK=1.00, SIZE=0.56;
-function distOf(pitch){
-  var t=Math.tan(Math.abs(pitch)*Math.PI/180);
-  var d = t<1e-4 ? 99 : (H_EYE-H_MARK)/t;
-  return Math.min(Math.max(d,1.2),8.0);
-}
-function angOf(pitch){ return +(2*Math.atan((SIZE/2)/distOf(pitch))*180/Math.PI).toFixed(1); }
-
 const CAN_EDIT=new URLSearchParams(location.search).has("edit");
-const KEY="tourLinks.v5";
+const KEY="tourLinks.v6";
+try{["tourLinks.v3","tourLinks.v4","tourLinks.v5"].forEach(k=>localStorage.removeItem(k));}catch(e){}
 const byId=Object.fromEntries(POINTS.map(p=>[p.id,p.title]));
 let LINKS=JSON.parse(JSON.stringify(BASE_LINKS));
-if(CAN_EDIT){ try{var st=localStorage.getItem(KEY); if(st) LINKS=JSON.parse(st);}catch(e){} }
-function persist(){ if(!CAN_EDIT) return;
-  try{localStorage.setItem(KEY,JSON.stringify(LINKS));}catch(e){} }
-try{ localStorage.removeItem("tourLinks.v3"); localStorage.removeItem("tourLinks.v4"); }catch(e){}
+if(CAN_EDIT){try{const s=localStorage.getItem(KEY); if(s) LINKS=JSON.parse(s);}catch(e){}}
+function persist(){ if(!CAN_EDIT) return; try{localStorage.setItem(KEY,JSON.stringify(LINKS));}catch(e){} }
 
-let editing=false, viewer=null, current=POINTS[0].id;
 const $=id=>document.getElementById(id);
-const MARK='<div class="paw"></div>';
+let editing=false, current=POINTS[0].id, sel=null;
 
 function startYaw(id){const a=LINKS[id]; return a&&a.length?a[0].yaw:0;}
-function tooltip(div,args){
-  div.classList.add("hs");
-  div.dataset.idx=args.idx;
-  div.style.setProperty("--ang", args.ang||9);
-  var d=document.createElement("div"); d.className="disc"; d.innerHTML=MARK; div.appendChild(d);
-  var s=document.createElement("span"); s.className="hs-label"; s.textContent=args.title;
-  div.appendChild(s);
-}
-function hotspotsFor(id){
-  return (LINKS[id]||[]).map((l,i)=>({
-    id:"hs"+i, pitch:l.pitch, yaw:l.yaw,
-    type:"info", cssClass:"hs",
-    createTooltipFunc:tooltip,
-    createTooltipArgs:{title:byId[l.to]||l.to, ang:l.ang, idx:i, to:l.to},
-    clickHandlerFunc: function(e,idx){
-      if(editing){ onPawClick(e,idx); return; }
-      var t=(LINKS[current]||[])[idx];
-      if(t) viewer.loadScene(t.to);
-    },
-    clickHandlerArgs: i }));
-}
-function buildScenes(){
-  const s={};
-  POINTS.forEach(p=>{s[p.id]={type:"equirectangular",panorama:"pano/"+p.id+".jpg",
-    hfov:100,minHfov:45,maxHfov:120,pitch:-4,yaw:startYaw(p.id),hotSpots:hotspotsFor(p.id)};});
-  return s;
-}
-function makeViewer(scene,pitch,yaw,hfov,fade){
-  if(viewer){try{viewer.destroy();}catch(e){} viewer=null;}
-  const sc=buildScenes();
-  if(pitch!==undefined){sc[scene].pitch=pitch;sc[scene].yaw=yaw;sc[scene].hfov=hfov;}
-  viewer=pannellum.viewer("pano",{
-    default:{firstScene:scene,sceneFadeDuration:fade===0?0:700,autoLoad:true,
-      showControls:false,compass:false,friction:0.16,backgroundColor:[0.07,0.06,0.055]},
-    scenes:sc});
-  viewer.on("scenechange",id=>{current=id;sel=null;paintRoom();renderPanel();});
-  viewer.on("load",()=>$("splash").classList.add("gone"));
-}
-function keepView(){const p=viewer.getPitch(),y=viewer.getYaw(),h=viewer.getHfov();
-  makeViewer(current,p,y,h,0);}
+const scenes={};
+POINTS.forEach(p=>{scenes[p.id]={type:"equirectangular",panorama:"pano/"+p.id+".jpg",
+  hfov:100,minHfov:45,maxHfov:120,pitch:-4,yaw:startYaw(p.id),hotSpots:[]};});
+
+const viewer=pannellum.viewer("pano",{
+  default:{firstScene:POINTS[0].id,sceneFadeDuration:700,autoLoad:true,
+    showControls:false,compass:false,friction:0.16,backgroundColor:[0.07,0.06,0.055]},
+  scenes:scenes});
+
+viewer.on("scenechange",id=>{current=id;sel=null;paintRoom();buildHits();renderPanel();});
+viewer.on("load",()=>$("splash").classList.add("gone"));
 function paintRoom(){$("roomName").textContent=byId[current]||current;}
-makeViewer(POINTS[0].id); paintRoom();
 
-(function loop(){
-  if(viewer){try{
-    $("ghostSizeProbe");
-    document.documentElement.style.setProperty("--pxdeg",(window.innerWidth/viewer.getHfov()).toFixed(3));
-  }catch(e){}}
-  requestAnimationFrame(loop);
-})();
+/* ─── свой слой зон клика ─── */
+const hits=$("hits");
+function buildHits(){
+  hits.innerHTML="";
+  (LINKS[current]||[]).forEach((l,i)=>{
+    const b=document.createElement("button");
+    b.className="hit"; b.dataset.i=i;
+    b.setAttribute("aria-label","Перейти: "+(byId[l.to]||l.to));
+    const c=document.createElement("span"); c.className="cap";
+    c.textContent=byId[l.to]||l.to; b.appendChild(c);
+    b.addEventListener("click",ev=>{
+      ev.stopPropagation();
+      if(editing){ sel=(sel===i)?null:i; markSel(); renderPanel(); return; }
+      viewer.loadScene(l.to);
+    });
+    hits.appendChild(b);
+  });
+  markSel();
+}
+function markSel(){
+  hits.querySelectorAll(".hit").forEach(d=>d.classList.toggle("sel",String(sel)===d.dataset.i));
+}
+const R=Math.PI/180;
+function place(){
+  const arr=LINKS[current]||[];
+  if(!arr.length) return;
+  const W=hits.clientWidth, H=hits.clientHeight;
+  let p0,y0,hf;
+  try{ p0=viewer.getPitch(); y0=viewer.getYaw(); hf=viewer.getHfov(); }catch(e){ return; }
+  const f=(W/2)/Math.tan(hf*R/2);
+  const lat0=p0*R, lon0=y0*R, s0=Math.sin(lat0), c0=Math.cos(lat0);
+  hits.querySelectorAll(".hit").forEach(d=>{
+    const l=arr[+d.dataset.i]; if(!l){d.style.display="none";return;}
+    const lat=l.pitch*R, dl=l.yaw*R-lon0;
+    const cosc=s0*Math.sin(lat)+c0*Math.cos(lat)*Math.cos(dl);
+    if(cosc<=0.05){ d.style.display="none"; return; }
+    const u=Math.cos(lat)*Math.sin(dl)/cosc;
+    const v=(c0*Math.sin(lat)-s0*Math.cos(lat)*Math.cos(dl))/cosc;
+    const x=W/2+u*f, y=H/2-v*f;
+    if(x<-200||x>W+200||y<-200||y>H+200){ d.style.display="none"; return; }
+    const size=Math.max(44, 2*f*Math.tan((l.ang||8)*R/2)*1.1);
+    d.style.display="block";
+    d.style.left=x+"px"; d.style.top=y+"px";
+    d.style.width=size+"px"; d.style.height=size+"px";
+  });
+}
+(function loop(){ place(); requestAnimationFrame(loop); })();
+buildHits(); paintRoom();
 
-const sheet=$("sheet"),sb=$("sheetBody");
-const hh=document.createElement("h2");hh.textContent="Все помещения";sb.appendChild(hh);
-const grid=document.createElement("div");grid.className="grid";sb.appendChild(grid);
+/* ─── меню ─── */
+const sheet=$("sheet"), sb=$("sheetBody");
+const hh=document.createElement("h2"); hh.textContent="Все помещения"; sb.appendChild(hh);
+const grid=document.createElement("div"); grid.className="grid"; sb.appendChild(grid);
 POINTS.forEach(p=>{const b=document.createElement("button");
   b.innerHTML='<img src="thumb/'+p.id+'.jpg" alt="" loading="lazy"><span>'+p.title+'</span>';
   b.onclick=()=>{viewer.loadScene(p.id);sheet.classList.remove("open");};grid.appendChild(b);});
@@ -252,135 +232,61 @@ $("btnFull").onclick=()=>{const el=document.documentElement;
 function flash(m){const h=$("hint");h.textContent=m;h.classList.add("show");
   clearTimeout(flash.t);flash.t=setTimeout(()=>h.classList.remove("show"),1500);}
 
-const target=$("editTarget");
-POINTS.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.title;
-  target.appendChild(o);});
-if(CAN_EDIT) $("btnEdit").removeAttribute("hidden");
-$("btnEdit").onclick=()=>{editing=!editing;
-  document.body.classList.toggle("editing",editing);
-  $("edit").classList.toggle("on",editing);
-  $("btnEdit").setAttribute("aria-pressed",String(editing));
-  keepView();renderPanel();
-  flash(editing?"Правка включена":"Правка выключена");};
-
+/* ─── правка (только по адресу ?edit) ─── */
 function renderPanel(){
-  if(!editing)return;
+  if(!editing) return;
   const arr=LINKS[current]||[];
-  $("editStatus").textContent="«"+byId[current]+"» — стрелок: "+arr.length;
-  const list=$("arrowList");list.innerHTML="";
+  $("editStatus").textContent="«"+byId[current]+"» — лапок: "+arr.length+
+    (sel!==null?". Выбрана — кликни, куда перенести.":". Кликни лапку.");
+  const list=$("arrowList"); list.innerHTML="";
   arr.forEach((l,i)=>{
-    const row=document.createElement("div");row.className="row";
-    const nm=document.createElement("span");nm.className="nm";
-    nm.textContent=(sel===i?"● ":"→ ")+(byId[l.to]||l.to);if(sel===i)nm.style.color="#C2A76A";row.appendChild(nm);
-    const co=document.createElement("span");co.className="co";
-    co.textContent=distOf(l.pitch).toFixed(1)+"м · "+l.ang+"°";row.appendChild(co);
-    const mk=(txt,fn,cls)=>{const b=document.createElement("button");
-      b.textContent=txt;if(cls)b.className=cls;b.onclick=fn;row.appendChild(b);};
-    mk("−",()=>{l.ang=Math.max(2.5,+(l.ang-1).toFixed(1));persist();keepView();renderPanel();});
-    mk("+",()=>{l.ang=Math.min(40,+(l.ang+1).toFixed(1));persist();keepView();renderPanel();});
-    mk("×",()=>{LINKS[current].splice(i,1);
-      if(!LINKS[current].length)delete LINKS[current];
-      persist();keepView();renderPanel();},"del");
+    const row=document.createElement("div"); row.className="row";
+    const nm=document.createElement("span"); nm.className="nm";
+    nm.textContent=(sel===i?"● ":"→ ")+(byId[l.to]||l.to);
+    if(sel===i) nm.style.color="#C2A76A";
+    row.appendChild(nm);
+    const co=document.createElement("span"); co.className="co";
+    co.textContent=l.ang+"°"; row.appendChild(co);
+    const mk=(t,fn,cls)=>{const b=document.createElement("button");b.textContent=t;
+      if(cls)b.className=cls;b.onclick=fn;row.appendChild(b);};
+    mk("−",()=>{l.ang=Math.max(2.5,+(l.ang-1).toFixed(1));persist();renderPanel();});
+    mk("+",()=>{l.ang=Math.min(40,+(l.ang+1).toFixed(1));persist();renderPanel();});
+    mk("×",()=>{arr.splice(i,1); if(!arr.length)delete LINKS[current];
+      sel=null;persist();buildHits();renderPanel();},"del");
     list.appendChild(row);
   });
   $("editOut").value=JSON.stringify(LINKS);
 }
-
-let sel=null, hotClick=false;
-const ghost=$("ghost");
-
-function onPawClick(e,idx){
-  hotClick=true;
-  setTimeout(()=>{hotClick=false;},0);
-  sel=(sel===idx)?null:idx;
-  markSel(); renderPanel();
-  if(sel!==null){
+if(CAN_EDIT){
+  $("btnEdit").removeAttribute("hidden");
+  $("btnEdit").onclick=()=>{editing=!editing;
+    document.body.classList.toggle("editing",editing);
+    $("edit").classList.toggle("on",editing);
+    $("btnEdit").setAttribute("aria-pressed",String(editing));
+    sel=null;markSel();renderPanel();
+    flash(editing?"Правка включена":"Правка выключена");};
+  $("pano").addEventListener("click",e=>{
+    if(!editing||sel===null) return;
+    let c=null; try{c=viewer.mouseEventToCoords(e);}catch(err){}
+    if(!c) return;
     const l=(LINKS[current]||[])[sel];
-    flash("Выбрана: "+(byId[l.to]||l.to)+" — кликни, куда перенести");
-  }
-}
-function markSel(){
-  document.querySelectorAll("#pano .hs").forEach(d=>{
-    d.classList.toggle("sel", String(sel)===d.dataset.idx);
+    l.pitch=+c[0].toFixed(1); l.yaw=+c[1].toFixed(1);
+    persist(); renderPanel(); flash("Перенесена");
   });
+  document.addEventListener("keydown",e=>{
+    if(!editing||sel===null) return;
+    const l=(LINKS[current]||[])[sel]; if(!l) return;
+    const s=e.shiftKey?2:0.5; let ok=true;
+    if(e.key==="ArrowLeft") l.yaw-=s; else if(e.key==="ArrowRight") l.yaw+=s;
+    else if(e.key==="ArrowUp") l.pitch+=s; else if(e.key==="ArrowDown") l.pitch-=s;
+    else ok=false;
+    if(ok){l.pitch=+l.pitch.toFixed(1);l.yaw=+l.yaw.toFixed(1);persist();renderPanel();e.preventDefault();}
+  });
+  $("editCopy").onclick=()=>{const o=$("editOut");o.value=JSON.stringify(LINKS);o.select();
+    if(navigator.clipboard)navigator.clipboard.writeText(o.value)
+      .then(()=>flash("Скопировано"),()=>flash("Скопируй из поля вручную"));
+    else flash("Скопируй из поля вручную");};
 }
-function moveSel(pitch,yaw){
-  const l=(LINKS[current]||[])[sel]; if(!l) return;
-  l.pitch=+pitch.toFixed(1); l.yaw=+yaw.toFixed(1); l.ang=angOf(l.pitch);
-  persist(); keepView(); setTimeout(()=>{markSel();renderPanel();},40);
-}
-
-/* клик по панораме: перенести выбранную либо поставить новую */
-$("pano").addEventListener("click",e=>{
-  if(!editing) return;
-  if(hotClick) return;
-  if(e.target.closest(".hs")) return;
-  let c=null; try{c=viewer.mouseEventToCoords(e);}catch(err){}
-  if(!c) return;
-  if(sel!==null){ moveSel(c[0],c[1]); flash("Перенесена"); return; }
-  const to=target.value;
-  if(!to){ flash("Кликни лапку, чтобы перенести, или выбери комнату для новой"); return; }
-  if(to===current){ flash("Это та же комната"); return; }
-  const p=+c[0].toFixed(1);
-  (LINKS[current]=LINKS[current]||[]).push({to:to,pitch:p,yaw:+c[1].toFixed(1),ang:angOf(p)});
-  target.value=""; sel=null; persist(); keepView(); renderPanel();
-  flash("Лапка → "+byId[to]);
-});
-
-/* клавиатура: точная подгонка выбранной */
-document.addEventListener("keydown",e=>{
-  if(!editing||sel===null) return;
-  const l=(LINKS[current]||[])[sel]; if(!l) return;
-  const step=e.shiftKey?2:0.5;
-  let done=true;
-  if(e.key==="ArrowLeft")      moveSel(l.pitch, l.yaw-step);
-  else if(e.key==="ArrowRight")moveSel(l.pitch, l.yaw+step);
-  else if(e.key==="ArrowUp")   moveSel(l.pitch+step, l.yaw);
-  else if(e.key==="ArrowDown") moveSel(l.pitch-step, l.yaw);
-  else if(e.key==="Backspace"||e.key==="Delete"){
-    LINKS[current].splice(sel,1);
-    if(!LINKS[current].length) delete LINKS[current];
-    sel=null; persist(); keepView(); renderPanel();
-  } else done=false;
-  if(done) e.preventDefault();
-});
-
-/* перетаскивание — если мышь доберётся до лапки, работает и оно */
-let drag=null;
-document.addEventListener("mousedown",e=>{
-  if(!editing) return;
-  const el=e.target.closest(".hs"); if(!el) return;
-  const idx=parseInt(el.dataset.idx,10);
-  if(isNaN(idx)||!(LINKS[current]||[])[idx]) return;
-  drag={idx:idx,el:el,moved:false};
-  const sz=el.getBoundingClientRect().width;
-  ghost.style.width=sz+"px"; ghost.style.height=sz+"px";
-  ghost.style.marginLeft=(-sz/2)+"px"; ghost.style.marginTop=(-sz/2)+"px";
-  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
-  e.stopPropagation(); e.preventDefault();
-},true);
-document.addEventListener("mousemove",e=>{
-  if(!drag) return;
-  if(!drag.moved){ drag.moved=true; drag.el.classList.add("lifted"); ghost.classList.add("on"); }
-  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
-  e.preventDefault();
-},true);
-document.addEventListener("mouseup",e=>{
-  if(!drag) return; const d=drag; drag=null;
-  ghost.classList.remove("on"); d.el.classList.remove("lifted");
-  if(!d.moved) return;
-  let c=null; try{c=viewer.mouseEventToCoords(e);}catch(err){}
-  if(!c){ flash("Мимо панорамы"); return; }
-  sel=d.idx; moveSel(c[0],c[1]);
-},true);
-
-$("editCopy").onclick=()=>{const o=$("editOut");o.value=JSON.stringify(LINKS);o.select();
-  if(navigator.clipboard)navigator.clipboard.writeText(o.value)
-    .then(()=>flash("Скопировано"),()=>flash("Скопируй из поля вручную"));
-  else flash("Скопируй из поля вручную");};
-$("editReset").onclick=()=>{
-  if(!confirm("Вернуть разметку к вшитой в файл? Правки пропадут."))return;
-  LINKS=JSON.parse(JSON.stringify(BASE_LINKS));persist();keepView();renderPanel();flash("Возвращено");};
 </script>
 </body>
 </html>
