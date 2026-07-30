@@ -55,6 +55,8 @@
   body.editing .hs .hs-label{opacity:1}
   body.editing .hs .disc{outline:2px dashed var(--brass);outline-offset:3px}
   .hs.lifted{opacity:.2}
+  .hs.sel .disc{background:var(--brass);outline:3px solid #fff;outline-offset:4px}
+  .hs.sel .disc .paw{background:#12100E}
   #ghost{position:fixed;z-index:20;border-radius:50%;background:var(--moss);
     box-shadow:0 8px 26px rgba(0,0,0,.5);display:none;place-items:center;pointer-events:none}
   #ghost.on{display:grid}
@@ -135,7 +137,7 @@
 <div id="edit">
   <h3>Правка стрелок</h3>
   <p class="sub" id="editStatus">—</p>
-  <p class="sub" style="color:#C2A76A">Тяни стрелку мышкой. Выше = дальше = мельче, ниже = ближе = крупнее. Кнопки − и + меняют размер вручную.</p>
+  <p class="sub" style="color:#C2A76A">Кликни лапку — она станет золотой. Кликни в новое место — переедет. Стрелки на клавиатуре двигают точнее, Shift — крупнее шаг. Выше = дальше = мельче.</p>
   <div id="arrowList"></div>
   <select id="editTarget"><option value="">+ новая стрелка: куда ведёт?</option></select>
   <button class="btn" id="editCopy">Скопировать разметку</button>
@@ -179,6 +181,7 @@ const MARK='<div class="paw"></div>';
 function startYaw(id){const a=LINKS[id]; return a&&a.length?a[0].yaw:0;}
 function tooltip(div,args){
   div.classList.add("hs");
+  div.dataset.idx=args.idx;
   div.style.setProperty("--ang", args.ang||9);
   var d=document.createElement("div"); d.className="disc"; d.innerHTML=MARK; div.appendChild(d);
   var s=document.createElement("span"); s.className="hs-label"; s.textContent=args.title;
@@ -189,8 +192,9 @@ function hotspotsFor(id){
     id:"hs"+i, pitch:l.pitch, yaw:l.yaw,
     type: editing?"info":"scene", sceneId:l.to, cssClass:"hs",
     createTooltipFunc:tooltip,
-    createTooltipArgs:{title:byId[l.to]||l.to, ang:l.ang},
-    clickHandlerFunc: editing?function(){}:undefined }));
+    createTooltipArgs:{title:byId[l.to]||l.to, ang:l.ang, idx:i},
+    clickHandlerFunc: editing?onPawClick:undefined,
+    clickHandlerArgs: i }));
 }
 function buildScenes(){
   const s={};
@@ -206,7 +210,7 @@ function makeViewer(scene,pitch,yaw,hfov,fade){
     default:{firstScene:scene,sceneFadeDuration:fade===0?0:700,autoLoad:true,
       showControls:false,compass:false,friction:0.16,backgroundColor:[0.07,0.06,0.055]},
     scenes:sc});
-  viewer.on("scenechange",id=>{current=id;paintRoom();renderPanel();});
+  viewer.on("scenechange",id=>{current=id;sel=null;paintRoom();renderPanel();});
   viewer.on("load",()=>$("splash").classList.add("gone"));
 }
 function keepView(){const p=viewer.getPitch(),y=viewer.getYaw(),h=viewer.getHfov();
@@ -258,7 +262,7 @@ function renderPanel(){
   arr.forEach((l,i)=>{
     const row=document.createElement("div");row.className="row";
     const nm=document.createElement("span");nm.className="nm";
-    nm.textContent="→ "+(byId[l.to]||l.to);row.appendChild(nm);
+    nm.textContent=(sel===i?"● ":"→ ")+(byId[l.to]||l.to);if(sel===i)nm.style.color="#C2A76A";row.appendChild(nm);
     const co=document.createElement("span");co.className="co";
     co.textContent=distOf(l.pitch).toFixed(1)+"м · "+l.ang+"°";row.appendChild(co);
     const mk=(txt,fn,cls)=>{const b=document.createElement("button");
@@ -273,50 +277,93 @@ function renderPanel(){
   $("editOut").value=JSON.stringify(LINKS);
 }
 
-let drag=null;const ghost=$("ghost");
+let sel=null, hotClick=false;
+const ghost=$("ghost");
+
+function onPawClick(e,idx){
+  hotClick=true;
+  setTimeout(()=>{hotClick=false;},0);
+  sel=(sel===idx)?null:idx;
+  markSel(); renderPanel();
+  if(sel!==null){
+    const l=(LINKS[current]||[])[sel];
+    flash("Выбрана: "+(byId[l.to]||l.to)+" — кликни, куда перенести");
+  }
+}
+function markSel(){
+  document.querySelectorAll("#pano .hs").forEach(d=>{
+    d.classList.toggle("sel", String(sel)===d.dataset.idx);
+  });
+}
+function moveSel(pitch,yaw){
+  const l=(LINKS[current]||[])[sel]; if(!l) return;
+  l.pitch=+pitch.toFixed(1); l.yaw=+yaw.toFixed(1); l.ang=angOf(l.pitch);
+  persist(); keepView(); setTimeout(()=>{markSel();renderPanel();},40);
+}
+
+/* клик по панораме: перенести выбранную либо поставить новую */
+$("pano").addEventListener("click",e=>{
+  if(!editing) return;
+  if(hotClick) return;
+  if(e.target.closest(".hs")) return;
+  let c=null; try{c=viewer.mouseEventToCoords(e);}catch(err){}
+  if(!c) return;
+  if(sel!==null){ moveSel(c[0],c[1]); flash("Перенесена"); return; }
+  const to=target.value;
+  if(!to){ flash("Кликни лапку, чтобы перенести, или выбери комнату для новой"); return; }
+  if(to===current){ flash("Это та же комната"); return; }
+  const p=+c[0].toFixed(1);
+  (LINKS[current]=LINKS[current]||[]).push({to:to,pitch:p,yaw:+c[1].toFixed(1),ang:angOf(p)});
+  target.value=""; sel=null; persist(); keepView(); renderPanel();
+  flash("Лапка → "+byId[to]);
+});
+
+/* клавиатура: точная подгонка выбранной */
+document.addEventListener("keydown",e=>{
+  if(!editing||sel===null) return;
+  const l=(LINKS[current]||[])[sel]; if(!l) return;
+  const step=e.shiftKey?2:0.5;
+  let done=true;
+  if(e.key==="ArrowLeft")      moveSel(l.pitch, l.yaw-step);
+  else if(e.key==="ArrowRight")moveSel(l.pitch, l.yaw+step);
+  else if(e.key==="ArrowUp")   moveSel(l.pitch+step, l.yaw);
+  else if(e.key==="ArrowDown") moveSel(l.pitch-step, l.yaw);
+  else if(e.key==="Backspace"||e.key==="Delete"){
+    LINKS[current].splice(sel,1);
+    if(!LINKS[current].length) delete LINKS[current];
+    sel=null; persist(); keepView(); renderPanel();
+  } else done=false;
+  if(done) e.preventDefault();
+});
+
+/* перетаскивание — если мышь доберётся до лапки, работает и оно */
+let drag=null;
 document.addEventListener("mousedown",e=>{
-  if(!editing)return;
-  const el=e.target.closest(".hs"); if(!el)return;
-  const divs=Array.from(document.querySelectorAll("#pano .hs"));
-  const idx=divs.indexOf(el); const list=LINKS[current]||[];
-  if(idx<0||idx>=list.length)return;
+  if(!editing) return;
+  const el=e.target.closest(".hs"); if(!el) return;
+  const idx=parseInt(el.dataset.idx,10);
+  if(isNaN(idx)||!(LINKS[current]||[])[idx]) return;
   drag={idx:idx,el:el,moved:false};
-  el.classList.add("lifted");
   const sz=el.getBoundingClientRect().width;
-  ghost.style.width=sz+"px";ghost.style.height=sz+"px";
-  ghost.style.marginLeft=(-sz/2)+"px";ghost.style.marginTop=(-sz/2)+"px";
-  ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px";
-  ghost.classList.add("on");
-  e.stopPropagation();e.preventDefault();
+  ghost.style.width=sz+"px"; ghost.style.height=sz+"px";
+  ghost.style.marginLeft=(-sz/2)+"px"; ghost.style.marginTop=(-sz/2)+"px";
+  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
+  e.stopPropagation(); e.preventDefault();
 },true);
 document.addEventListener("mousemove",e=>{
-  if(!drag)return;drag.moved=true;
-  ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px";
+  if(!drag) return;
+  if(!drag.moved){ drag.moved=true; drag.el.classList.add("lifted"); ghost.classList.add("on"); }
+  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
   e.preventDefault();
 },true);
 document.addEventListener("mouseup",e=>{
-  if(!drag)return;const d=drag;drag=null;
-  ghost.classList.remove("on");d.el.classList.remove("lifted");
-  if(!d.moved)return;
-  let c=null;try{c=viewer.mouseEventToCoords(e);}catch(err){}
-  if(!c){flash("Мимо панорамы");return;}
-  const rec=(LINKS[current]||[])[d.idx];
-  if(rec){rec.pitch=+c[0].toFixed(1);rec.yaw=+c[1].toFixed(1);rec.ang=angOf(rec.pitch);
-    persist();keepView();renderPanel();}
+  if(!drag) return; const d=drag; drag=null;
+  ghost.classList.remove("on"); d.el.classList.remove("lifted");
+  if(!d.moved) return;
+  let c=null; try{c=viewer.mouseEventToCoords(e);}catch(err){}
+  if(!c){ flash("Мимо панорамы"); return; }
+  sel=d.idx; moveSel(c[0],c[1]);
 },true);
-
-$("pano").addEventListener("click",e=>{
-  if(!editing)return;
-  if(e.target.closest(".hs"))return;
-  const to=target.value;
-  if(!to){flash("Сначала выбери комнату в списке");return;}
-  if(to===current){flash("Это та же комната");return;}
-  let c=null;try{c=viewer.mouseEventToCoords(e);}catch(err){}
-  if(!c)return;
-  const p=+c[0].toFixed(1);
-  (LINKS[current]=LINKS[current]||[]).push({to:to,pitch:p,yaw:+c[1].toFixed(1),ang:angOf(p)});
-  target.value="";persist();keepView();renderPanel();flash("Стрелка → "+byId[to]);
-});
 
 $("editCopy").onclick=()=>{const o=$("editOut");o.value=JSON.stringify(LINKS);o.select();
   if(navigator.clipboard)navigator.clipboard.writeText(o.value)
