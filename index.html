@@ -6,12 +6,10 @@
 <title>Виртуальный тур</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#12100E;--ink-soft:rgba(18,16,14,.72);--fog:#EDE8E0;
-        --fog-dim:rgba(237,232,224,.58);--moss:#3F6B4F;--brass:#C2A76A}
+        --fog-dim:rgba(237,232,224,.58);--moss:#3F6B4F;--brass:#C2A76A;--paw:#1C282F;--pxdeg:13}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;
     font-family:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -35,43 +33,34 @@
   .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;
     stroke-linecap:round;stroke-linejoin:round}
 
+  /* ── стрелка: размер = угловой размер × пикселей на градус ── */
   .hs{position:relative;cursor:pointer;display:grid;place-items:center;
-    width:clamp(38px, calc(var(--ang,9) * var(--pxdeg,13) * 1px), 320px);
-    height:clamp(38px, calc(var(--ang,9) * var(--pxdeg,13) * 1px), 320px)}
-  /* уличные — обычный кружок */
-  .hs-css .hs-plate{position:absolute;inset:0;border-radius:50%;
-    background:rgba(237,232,224,.90);box-shadow:0 6px 22px rgba(0,0,0,.42);
-    display:grid;place-items:center;transition:background .22s,transform .22s}
-  .hs-css .hs-plate::after{content:"";width:15px;height:15px;
-    border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink);
-    transform:rotate(-45deg) translate(-2px,-2px)}
-  .hs-css:hover .hs-plate{background:var(--moss);transform:scale(1.12)}
-  .hs-css:hover .hs-plate::after{border-color:#fff}
-  .hs-css.pulse .hs-plate{animation:pulse 2.6s ease-in-out infinite}
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
-  /* врезанные — стрелка уже в фотографии, тут только зона клика */
-  .hs-baked .hs-plate{position:absolute;inset:-8%;border-radius:50%;
-    border:2px solid transparent;transition:border-color .18s,background .18s}
-  .hs-baked:hover .hs-plate{border-color:rgba(237,232,224,.85);
-    background:rgba(63,107,79,.22)}
-  .hs-label{position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);
+    width:clamp(30px, calc(var(--ang,9) * var(--pxdeg) * 1px), 420px);
+    height:clamp(30px, calc(var(--ang,9) * var(--pxdeg) * 1px), 420px)}
+  .hs .disc{position:absolute;inset:0;border-radius:50%;
+    background:rgba(240,236,228,.93);
+    box-shadow:0 0 0 7% rgba(240,236,228,.20), 0 4px 5% rgba(0,0,0,.35);
+    display:grid;place-items:center;transition:background .2s}
+  .hs .disc .paw{width:56%;height:56%;background:var(--paw);transition:background .2s;
+    -webkit-mask:url(paw.png) center/contain no-repeat;
+    mask:url(paw.png) center/contain no-repeat}
+  .hs:hover .disc{background:var(--moss)}
+  .hs:hover .disc .paw{background:#fff}
+  .hs-label{position:absolute;top:104%;left:50%;transform:translateX(-50%);
     white-space:nowrap;padding:5px 11px;border-radius:3px;background:var(--ink-soft);
     backdrop-filter:blur(10px);color:var(--fog);font-size:12.5px;font-weight:500;
     opacity:0;transition:opacity .2s;pointer-events:none}
   .hs:hover .hs-label{opacity:1}
   body.editing .hs{cursor:grab}
   body.editing .hs .hs-label{opacity:1}
-  body.editing .hs-baked .hs-plate{border-color:var(--brass);border-style:dashed}
-  body.editing .hs-css .hs-plate{background:var(--brass)}
-  .hs.lifted{opacity:.22}
-
-  /* маркер, который едет за курсором */
-  #ghost{position:fixed;z-index:20;width:66px;height:66px;margin:-33px 0 0 -33px;
-    border-radius:50%;background:var(--moss);box-shadow:0 8px 26px rgba(0,0,0,.5);
-    display:none;place-items:center;pointer-events:none}
+  body.editing .hs .disc{outline:2px dashed var(--brass);outline-offset:3px}
+  .hs.lifted{opacity:.2}
+  #ghost{position:fixed;z-index:20;border-radius:50%;background:var(--moss);
+    box-shadow:0 8px 26px rgba(0,0,0,.5);display:none;place-items:center;pointer-events:none}
   #ghost.on{display:grid}
-  #ghost::after{content:"";width:16px;height:16px;border-right:2.6px solid #fff;
-    border-bottom:2.6px solid #fff;transform:rotate(-45deg) translate(-2px,-2px)}
+  #ghost .paw{width:56%;height:56%;background:#fff;
+    -webkit-mask:url(paw.png) center/contain no-repeat;
+    mask:url(paw.png) center/contain no-repeat}
 
   #sheet{position:absolute;inset:0;z-index:8;background:rgba(12,11,10,.94);
     backdrop-filter:blur(8px);padding:74px 26px 26px;overflow:auto;display:none}
@@ -88,26 +77,28 @@
   #closeSheet{position:absolute;top:18px;right:18px;width:42px;height:42px;border:0;
     border-radius:3px;background:rgba(237,232,224,.12);color:var(--fog);cursor:pointer;font-size:22px}
 
-  #edit{position:absolute;left:18px;bottom:18px;z-index:9;width:340px;
-    max-width:calc(100vw - 36px);max-height:calc(100vh - 130px);overflow:auto;
+  #edit{position:absolute;left:18px;bottom:18px;z-index:9;width:352px;
+    max-width:calc(100vw - 36px);max-height:calc(100vh - 120px);overflow:auto;
     background:#0C0B0A;border:1px solid rgba(194,167,106,.35);border-radius:4px;
     padding:14px;color:var(--fog);font-size:13px;display:none}
   #edit.on{display:block}
   #edit h3{margin:0 0 3px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--brass);font-weight:600}
-  #edit .sub{margin:0 0 11px;font-size:12px;line-height:1.45;color:var(--fog-dim)}
-  .arrow-row{display:flex;align-items:center;gap:8px;padding:6px 0;
+  #edit .sub{margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--fog-dim)}
+  .row{display:flex;align-items:center;gap:6px;padding:6px 0;
     border-bottom:1px solid rgba(237,232,224,.09);font-size:12.5px}
-  .arrow-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .arrow-row .co{color:var(--fog-dim);font-size:11px;font-family:ui-monospace,Menlo,monospace}
-  .arrow-row .del{border:0;background:rgba(255,90,70,.18);color:#FF9B8A;width:24px;height:24px;
-    border-radius:3px;cursor:pointer;flex:0 0 auto}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .co{color:var(--fog-dim);font-size:10.5px;font-family:ui-monospace,Menlo,monospace;
+    white-space:nowrap}
+  .row button{border:0;width:23px;height:23px;border-radius:3px;cursor:pointer;
+    flex:0 0 auto;background:rgba(237,232,224,.13);color:var(--fog);line-height:1;font-size:14px}
+  .row button.del{background:rgba(255,90,70,.18);color:#FF9B8A}
   #edit select,#edit textarea,#edit .btn{width:100%;font-family:inherit;font-size:13px}
   #edit select{padding:8px;background:#1A1815;color:var(--fog);
     border:1px solid rgba(237,232,224,.2);border-radius:3px;margin:11px 0 8px}
-  #edit textarea{height:80px;background:#1A1815;color:var(--fog);
+  #edit textarea{height:76px;background:#1A1815;color:var(--fog);
     border:1px solid rgba(237,232,224,.2);border-radius:3px;padding:8px;
-    font-family:ui-monospace,Menlo,monospace;font-size:10.5px;margin-top:8px;resize:vertical}
+    font-family:ui-monospace,Menlo,monospace;font-size:10px;margin-top:8px;resize:vertical}
   #edit .btn{padding:9px;border:0;border-radius:3px;background:var(--moss);color:#fff;
     cursor:pointer;font-weight:500;margin-bottom:6px;display:block}
   #edit .btn.ghost{background:rgba(237,232,224,.12);color:var(--fog)}
@@ -118,37 +109,33 @@
   #splash{position:absolute;inset:0;z-index:10;display:grid;place-items:center;
     background:var(--ink);color:var(--fog-dim);font-size:13px;transition:opacity .5s}
   #splash.gone{opacity:0;pointer-events:none}
-  @media (max-width:640px){.hs{width:56px;height:56px}.plate{top:12px;left:12px}.tools{top:12px;right:12px}}
+  @media (max-width:640px){.plate{top:12px;left:12px}.tools{top:12px;right:12px}}
 </style>
 </head>
 <body>
-
 <div id="pano"></div>
-<div id="ghost"></div>
+<div id="ghost"><div class="paw"></div></div>
 
-<div class="plate">
-  <p class="eyebrow">Виртуальный тур</p>
-  <p class="room" id="roomName">—</p>
-</div>
+<div class="plate"><p class="eyebrow">Виртуальный тур</p><p class="room" id="roomName">—</p></div>
 
 <div class="tools">
-  <button id="btnEdit" aria-pressed="false" title="Правка стрелок" aria-label="Правка стрелок">
+  <button id="btnEdit" aria-pressed="false" title="Правка стрелок">
     <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
-  <button id="btnMenu" title="Все помещения" aria-label="Все помещения">
+  <button id="btnMenu" title="Все помещения">
     <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-  <button id="btnSpin" aria-pressed="false" title="Автоповорот" aria-label="Автоповорот">
+  <button id="btnSpin" aria-pressed="false" title="Автоповорот">
     <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4h-4"/></svg></button>
-  <button id="btnFull" title="На весь экран" aria-label="На весь экран">
+  <button id="btnFull" title="На весь экран">
     <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 </div>
 
-<div id="sheet"><button id="closeSheet" aria-label="Закрыть">&times;</button><div id="sheetBody"></div></div>
+<div id="sheet"><button id="closeSheet">&times;</button><div id="sheetBody"></div></div>
 <div id="hint"></div>
 
 <div id="edit">
   <h3>Правка стрелок</h3>
   <p class="sub" id="editStatus">—</p>
-  <p class="sub" style="color:#C2A76A">Внутри дома стрелки врезаны в фотографию. Правка двигает только зону клика — саму картинку перерисую я, когда пришлёшь разметку.</p>
+  <p class="sub" style="color:#C2A76A">Тяни стрелку мышкой. Выше = дальше = мельче, ниже = ближе = крупнее. Кнопки − и + меняют размер вручную.</p>
   <div id="arrowList"></div>
   <select id="editTarget"><option value="">+ новая стрелка: куда ведёт?</option></select>
   <button class="btn" id="editCopy">Скопировать разметку</button>
@@ -159,7 +146,6 @@
 <div id="splash">Загружаем панораму…</div>
 
 <script>
-/* ═══ 1) ТОЧКИ ТУРА ═══ */
 const POINTS=[
  {id:"vhod",title:"Вход в дом"},{id:"dvor",title:"Двор и парковка"},
  {id:"dorozhka",title:"Дорожка вдоль дома"},{id:"uchastok",title:"Участок"},
@@ -169,197 +155,176 @@ const POINTS=[
  {id:"kab3",title:"Рабочая комната"},{id:"sanuzel1",title:"Санузел с ванной"},
  {id:"sanuzel2",title:"Санузел с душевой"},{id:"kotelnaya",title:"Котельная"}];
 
-/* ═══ 2) ПЕРЕХОДЫ ═══ */
-const BASE_LINKS={"prihozhaya": [{"to": "dvor", "pitch": -12.8, "yaw": -171.8, "ang": 13.2, "baked": true}, {"to": "holl1", "pitch": -9.6, "yaw": 1.3, "ang": 9.9, "baked": true}], "holl1": [{"to": "gostinaya", "pitch": -10.6, "yaw": 8.5, "ang": 10.8, "baked": true}, {"to": "sanuzel1", "pitch": -4.6, "yaw": 94.2, "ang": 4.7, "baked": true}, {"to": "kab1", "pitch": -10.2, "yaw": -107.7, "ang": 10.5, "baked": true}, {"to": "kab2", "pitch": -3.9, "yaw": 105.5, "ang": 4.0, "baked": true}, {"to": "prihozhaya", "pitch": -10.9, "yaw": 168.2, "ang": 11.2, "baked": true}, {"to": "kab3", "pitch": -6.0, "yaw": 65.9, "ang": 6.2, "baked": true}], "kab1": [{"to": "sanuzel2", "pitch": -5.1, "yaw": 131, "ang": 5.2, "baked": true}, {"to": "holl1", "pitch": -10.8, "yaw": 4.7, "ang": 11.1, "baked": true}], "kab3": [{"to": "holl2", "pitch": -6.8, "yaw": 2.4, "ang": 6.9, "baked": true}], "gostinaya": [{"to": "holl2", "pitch": -7.6, "yaw": 143.2, "ang": 7.8, "baked": true}, {"to": "kotelnaya", "pitch": -3.9, "yaw": -129.2, "ang": 4.0, "baked": true}], "holl2": [{"to": "sanuzel1", "pitch": -7.8, "yaw": -165.9, "ang": 7.9, "baked": true}, {"to": "kab1", "pitch": -3.9, "yaw": -18.1, "ang": 4.0, "baked": true}, {"to": "gostinaya", "pitch": -5.7, "yaw": 23.3, "ang": 5.8, "baked": true}, {"to": "kab2", "pitch": -3.9, "yaw": -120, "ang": 4.0, "baked": true}, {"to": "prihozhaya", "pitch": -6.5, "yaw": -42.5, "ang": 6.7, "baked": true}, {"to": "kab3", "pitch": -6.1, "yaw": 127.6, "ang": 6.2, "baked": true}], "kab2": [{"to": "holl2", "pitch": -9.0, "yaw": -146, "ang": 9.2, "baked": true}], "sanuzel2": [{"to": "kab3", "pitch": -8.4, "yaw": -166.6, "ang": 8.6, "baked": true}], "kotelnaya": [{"to": "gostinaya", "pitch": -3.9, "yaw": 150.4, "ang": 4.0, "baked": true}, {"to": "uchastok", "pitch": -4.2, "yaw": 25.7, "ang": 4.2, "baked": true}], "vhod": [{"to": "prihozhaya", "pitch": 4.4, "yaw": -76.5, "baked": false}, {"to": "uchastok", "pitch": 4.8, "yaw": -147.7, "baked": false}, {"to": "dvor", "pitch": -3.2, "yaw": -174.5, "baked": false}], "dvor": [{"to": "vhod", "pitch": -4.5, "yaw": 46.8, "baked": false}, {"to": "uchastok", "pitch": -8.2, "yaw": -1.8, "baked": false}], "dorozhka": [{"to": "uchastok", "pitch": -8.4, "yaw": 73, "baked": false}, {"to": "vhod", "pitch": -13.6, "yaw": -49.3, "baked": false}], "uchastok": [{"to": "dorozhka", "pitch": -11.9, "yaw": -65.3, "baked": false}, {"to": "dvor", "pitch": -18.4, "yaw": 53.9, "baked": false}, {"to": "kotelnaya", "pitch": -21.7, "yaw": 26.1, "baked": false}], "sanuzel1": [{"to": "holl2", "pitch": -4.9, "yaw": 137.4, "ang": 5.0, "baked": true}]};
+const BASE_LINKS={"prihozhaya": [{"to": "dvor", "pitch": -12.8, "yaw": -171.8, "ang": 13.2}, {"to": "holl1", "pitch": -9.6, "yaw": 1.3, "ang": 9.9}], "holl1": [{"to": "gostinaya", "pitch": -10.6, "yaw": 8.5, "ang": 10.8}, {"to": "sanuzel1", "pitch": -4.6, "yaw": 94.2, "ang": 4.7}, {"to": "kab1", "pitch": -10.2, "yaw": -107.7, "ang": 10.5}, {"to": "kab2", "pitch": -3.9, "yaw": 105.5, "ang": 4.0}, {"to": "prihozhaya", "pitch": -10.9, "yaw": 168.2, "ang": 11.2}, {"to": "kab3", "pitch": -6.0, "yaw": 65.9, "ang": 6.2}], "kab1": [{"to": "sanuzel2", "pitch": -5.1, "yaw": 131, "ang": 5.2}, {"to": "holl1", "pitch": -10.8, "yaw": 4.7, "ang": 11.1}], "kab3": [{"to": "holl2", "pitch": -6.8, "yaw": 2.4, "ang": 6.9}], "gostinaya": [{"to": "holl2", "pitch": -7.6, "yaw": 143.2, "ang": 7.8}, {"to": "kotelnaya", "pitch": -3.9, "yaw": -129.2, "ang": 4.0}], "holl2": [{"to": "sanuzel1", "pitch": -7.8, "yaw": -165.9, "ang": 7.9}, {"to": "kab1", "pitch": -3.9, "yaw": -18.1, "ang": 4.0}, {"to": "gostinaya", "pitch": -5.7, "yaw": 23.3, "ang": 5.8}, {"to": "kab2", "pitch": -3.9, "yaw": -120, "ang": 4.0}, {"to": "prihozhaya", "pitch": -6.5, "yaw": -42.5, "ang": 6.7}, {"to": "kab3", "pitch": -6.1, "yaw": 127.6, "ang": 6.2}], "kab2": [{"to": "holl2", "pitch": -9.0, "yaw": -146, "ang": 9.2}], "sanuzel2": [{"to": "kab3", "pitch": -8.4, "yaw": -166.6, "ang": 8.6}], "kotelnaya": [{"to": "gostinaya", "pitch": -3.9, "yaw": 150.4, "ang": 4.0}, {"to": "uchastok", "pitch": -4.2, "yaw": 25.7, "ang": 4.2}], "vhod": [{"to": "prihozhaya", "pitch": 4.4, "yaw": -76.5, "ang": 9}, {"to": "uchastok", "pitch": 4.8, "yaw": -147.7, "ang": 9}, {"to": "dvor", "pitch": -3.2, "yaw": -174.5, "ang": 9}], "dvor": [{"to": "vhod", "pitch": -4.5, "yaw": 46.8, "ang": 9}, {"to": "uchastok", "pitch": -8.2, "yaw": -1.8, "ang": 9}], "dorozhka": [{"to": "uchastok", "pitch": -8.4, "yaw": 73, "ang": 9}, {"to": "vhod", "pitch": -13.6, "yaw": -49.3, "ang": 9}], "uchastok": [{"to": "dorozhka", "pitch": -11.9, "yaw": -65.3, "ang": 9}, {"to": "dvor", "pitch": -18.4, "yaw": 53.9, "ang": 9}, {"to": "kotelnaya", "pitch": -21.7, "yaw": 26.1, "ang": 9}], "sanuzel1": [{"to": "holl2", "pitch": -4.9, "yaw": 137.4, "ang": 5.0}]};
 
-/* ─────────────────────────────────── */
-const KEY="tourLinks.v3";
+/* геометрия: угол наклона -> расстояние -> угловой размер */
+const H_EYE=1.55, H_MARK=1.00, SIZE=0.56;
+function distOf(pitch){
+  var t=Math.tan(Math.abs(pitch)*Math.PI/180);
+  var d = t<1e-4 ? 99 : (H_EYE-H_MARK)/t;
+  return Math.min(Math.max(d,1.2),8.0);
+}
+function angOf(pitch){ return +(2*Math.atan((SIZE/2)/distOf(pitch))*180/Math.PI).toFixed(1); }
+
+const KEY="tourLinks.v4";
 const byId=Object.fromEntries(POINTS.map(p=>[p.id,p.title]));
 let LINKS=JSON.parse(JSON.stringify(BASE_LINKS));
-try{const s=localStorage.getItem(KEY); if(s) LINKS=JSON.parse(s);}catch(e){}
+try{var st=localStorage.getItem(KEY); if(st) LINKS=JSON.parse(st);}catch(e){}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(LINKS));}catch(e){}}
 
 let editing=false, viewer=null, current=POINTS[0].id;
 const $=id=>document.getElementById(id);
+const MARK='<div class="paw"></div>';
 
 function startYaw(id){const a=LINKS[id]; return a&&a.length?a[0].yaw:0;}
-
 function tooltip(div,args){
   div.classList.add("hs");
-  div.classList.add(args.baked?"hs-baked":"hs-css");
-  if(!editing && !args.baked) div.classList.add("pulse");
   div.style.setProperty("--ang", args.ang||9);
-  var plate=document.createElement("div"); plate.className="hs-plate";
-  div.appendChild(plate);
-  var s=document.createElement("span");
-  s.className="hs-label"; s.textContent=args.title; div.appendChild(s);
+  var d=document.createElement("div"); d.className="disc"; d.innerHTML=MARK; div.appendChild(d);
+  var s=document.createElement("span"); s.className="hs-label"; s.textContent=args.title;
+  div.appendChild(s);
 }
 function hotspotsFor(id){
   return (LINKS[id]||[]).map((l,i)=>({
     id:"hs"+i, pitch:l.pitch, yaw:l.yaw,
     type: editing?"info":"scene", sceneId:l.to, cssClass:"hs",
-    createTooltipFunc:tooltip, createTooltipArgs:{title:(byId[l.to]||l.to),ang:l.ang,baked:!!l.baked},
-    clickHandlerFunc: editing?function(){}:undefined
-  }));
+    createTooltipFunc:tooltip,
+    createTooltipArgs:{title:byId[l.to]||l.to, ang:l.ang},
+    clickHandlerFunc: editing?function(){}:undefined }));
 }
 function buildScenes(){
   const s={};
-  POINTS.forEach(p=>{ s[p.id]={type:"equirectangular",panorama:"pano/"+p.id+".jpg",
+  POINTS.forEach(p=>{s[p.id]={type:"equirectangular",panorama:"pano/"+p.id+".jpg",
     hfov:100,minHfov:45,maxHfov:120,pitch:-4,yaw:startYaw(p.id),hotSpots:hotspotsFor(p.id)};});
   return s;
 }
 function makeViewer(scene,pitch,yaw,hfov,fade){
-  if(viewer){ try{viewer.destroy();}catch(e){} viewer=null; }
+  if(viewer){try{viewer.destroy();}catch(e){} viewer=null;}
   const sc=buildScenes();
-  if(pitch!==undefined){ sc[scene].pitch=pitch; sc[scene].yaw=yaw; sc[scene].hfov=hfov; }
+  if(pitch!==undefined){sc[scene].pitch=pitch;sc[scene].yaw=yaw;sc[scene].hfov=hfov;}
   viewer=pannellum.viewer("pano",{
     default:{firstScene:scene,sceneFadeDuration:fade===0?0:700,autoLoad:true,
-             showControls:false,compass:false,friction:0.16,
-             backgroundColor:[0.07,0.06,0.055]},
+      showControls:false,compass:false,friction:0.16,backgroundColor:[0.07,0.06,0.055]},
     scenes:sc});
   viewer.on("scenechange",id=>{current=id;paintRoom();renderPanel();});
   viewer.on("load",()=>$("splash").classList.add("gone"));
 }
-function rebuildKeepingView(){
-  const p=viewer.getPitch(),y=viewer.getYaw(),h=viewer.getHfov();
-  makeViewer(current,p,y,h,0);
-}
-function paintRoom(){ $("roomName").textContent=byId[current]||current; }
+function keepView(){const p=viewer.getPitch(),y=viewer.getYaw(),h=viewer.getHfov();
+  makeViewer(current,p,y,h,0);}
+function paintRoom(){$("roomName").textContent=byId[current]||current;}
+makeViewer(POINTS[0].id); paintRoom();
 
-makeViewer(POINTS[0].id);
-paintRoom();
-
-/* зоны клика растут вместе с картинкой при зуме */
-(function zoomLoop(){
-  if(viewer){
-    try{
-      var pxdeg=window.innerWidth/viewer.getHfov();
-      document.documentElement.style.setProperty("--pxdeg", pxdeg.toFixed(3));
-    }catch(e){}
-  }
-  requestAnimationFrame(zoomLoop);
+(function loop(){
+  if(viewer){try{
+    $("ghostSizeProbe");
+    document.documentElement.style.setProperty("--pxdeg",(window.innerWidth/viewer.getHfov()).toFixed(3));
+  }catch(e){}}
+  requestAnimationFrame(loop);
 })();
 
-/* ---------- меню ---------- */
-const sheet=$("sheet"), sb=$("sheetBody");
-const h2=document.createElement("h2"); h2.textContent="Все помещения"; sb.appendChild(h2);
-const grid=document.createElement("div"); grid.className="grid"; sb.appendChild(grid);
+const sheet=$("sheet"),sb=$("sheetBody");
+const hh=document.createElement("h2");hh.textContent="Все помещения";sb.appendChild(hh);
+const grid=document.createElement("div");grid.className="grid";sb.appendChild(grid);
 POINTS.forEach(p=>{const b=document.createElement("button");
   b.innerHTML='<img src="thumb/'+p.id+'.jpg" alt="" loading="lazy"><span>'+p.title+'</span>';
   b.onclick=()=>{viewer.loadScene(p.id);sheet.classList.remove("open");};grid.appendChild(b);});
 $("btnMenu").onclick=()=>sheet.classList.add("open");
 $("closeSheet").onclick=()=>sheet.classList.remove("open");
 document.addEventListener("keydown",e=>{if(e.key==="Escape")sheet.classList.remove("open");});
-
-let spinning=false;
-$("btnSpin").onclick=()=>{spinning=!spinning;
-  spinning?viewer.startAutoRotate(-2):viewer.stopAutoRotate();
-  $("btnSpin").setAttribute("aria-pressed",String(spinning));};
+let spin=false;
+$("btnSpin").onclick=()=>{spin=!spin;spin?viewer.startAutoRotate(-2):viewer.stopAutoRotate();
+  $("btnSpin").setAttribute("aria-pressed",String(spin));};
 $("btnFull").onclick=()=>{const el=document.documentElement;
   if(!document.fullscreenElement)(el.requestFullscreen||el.webkitRequestFullscreen).call(el);
   else document.exitFullscreen();};
-
 function flash(m){const h=$("hint");h.textContent=m;h.classList.add("show");
   clearTimeout(flash.t);flash.t=setTimeout(()=>h.classList.remove("show"),1500);}
 
-/* ══════════ ПРАВКА ══════════ */
 const target=$("editTarget");
-POINTS.forEach(p=>{const o=document.createElement("option");
-  o.value=p.id;o.textContent=p.title;target.appendChild(o);});
-
-$("btnEdit").onclick=()=>{
-  editing=!editing;
+POINTS.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.title;
+  target.appendChild(o);});
+$("btnEdit").onclick=()=>{editing=!editing;
   document.body.classList.toggle("editing",editing);
   $("edit").classList.toggle("on",editing);
   $("btnEdit").setAttribute("aria-pressed",String(editing));
-  rebuildKeepingView(); renderPanel();
-  flash(editing?"Правка включена — тяни стрелки":"Правка выключена");
-};
+  keepView();renderPanel();
+  flash(editing?"Правка включена":"Правка выключена");};
 
 function renderPanel(){
-  if(!editing) return;
+  if(!editing)return;
   const arr=LINKS[current]||[];
-  $("editStatus").textContent="«"+byId[current]+"» — стрелок: "+arr.length+
-    ". Тяни мышкой, чтобы подвинуть.";
-  const list=$("arrowList"); list.innerHTML="";
+  $("editStatus").textContent="«"+byId[current]+"» — стрелок: "+arr.length;
+  const list=$("arrowList");list.innerHTML="";
   arr.forEach((l,i)=>{
-    const row=document.createElement("div"); row.className="arrow-row";
-    row.innerHTML='<span class="nm">→ '+(byId[l.to]||l.to)+'</span>'+
-      '<span class="co">'+l.pitch.toFixed(1)+' / '+l.yaw.toFixed(1)+'</span>';
-    const d=document.createElement("button"); d.className="del"; d.textContent="×";
-    d.onclick=()=>{LINKS[current].splice(i,1);
+    const row=document.createElement("div");row.className="row";
+    const nm=document.createElement("span");nm.className="nm";
+    nm.textContent="→ "+(byId[l.to]||l.to);row.appendChild(nm);
+    const co=document.createElement("span");co.className="co";
+    co.textContent=distOf(l.pitch).toFixed(1)+"м · "+l.ang+"°";row.appendChild(co);
+    const mk=(txt,fn,cls)=>{const b=document.createElement("button");
+      b.textContent=txt;if(cls)b.className=cls;b.onclick=fn;row.appendChild(b);};
+    mk("−",()=>{l.ang=Math.max(2.5,+(l.ang-1).toFixed(1));persist();keepView();renderPanel();});
+    mk("+",()=>{l.ang=Math.min(40,+(l.ang+1).toFixed(1));persist();keepView();renderPanel();});
+    mk("×",()=>{LINKS[current].splice(i,1);
       if(!LINKS[current].length)delete LINKS[current];
-      persist(); rebuildKeepingView(); renderPanel();};
-    row.appendChild(d); list.appendChild(row);
+      persist();keepView();renderPanel();},"del");
+    list.appendChild(row);
   });
   $("editOut").value=JSON.stringify(LINKS);
 }
 
-/* --- перетаскивание через маркер-призрак --- */
-let drag=null;
-const ghost=$("ghost");
-
+let drag=null;const ghost=$("ghost");
 document.addEventListener("mousedown",e=>{
-  if(!editing) return;
-  const el=e.target.closest(".hs");
-  if(!el) return;
-  const list=LINKS[current]||[];
+  if(!editing)return;
+  const el=e.target.closest(".hs"); if(!el)return;
   const divs=Array.from(document.querySelectorAll("#pano .hs"));
-  const idx=divs.indexOf(el);
-  if(idx<0||idx>=list.length) return;
+  const idx=divs.indexOf(el); const list=LINKS[current]||[];
+  if(idx<0||idx>=list.length)return;
   drag={idx:idx,el:el,moved:false};
   el.classList.add("lifted");
-  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
+  const sz=el.getBoundingClientRect().width;
+  ghost.style.width=sz+"px";ghost.style.height=sz+"px";
+  ghost.style.marginLeft=(-sz/2)+"px";ghost.style.marginTop=(-sz/2)+"px";
+  ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px";
   ghost.classList.add("on");
-  e.stopPropagation(); e.preventDefault();
+  e.stopPropagation();e.preventDefault();
 },true);
-
 document.addEventListener("mousemove",e=>{
-  if(!drag) return;
-  drag.moved=true;
-  ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
+  if(!drag)return;drag.moved=true;
+  ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px";
   e.preventDefault();
 },true);
-
 document.addEventListener("mouseup",e=>{
-  if(!drag) return;
-  const d=drag; drag=null;
-  ghost.classList.remove("on");
-  d.el.classList.remove("lifted");
-  if(!d.moved) return;
-  let c=null;
-  try{ c=viewer.mouseEventToCoords(e); }catch(err){}
-  if(!c){ flash("Не попал по панораме"); return; }
+  if(!drag)return;const d=drag;drag=null;
+  ghost.classList.remove("on");d.el.classList.remove("lifted");
+  if(!d.moved)return;
+  let c=null;try{c=viewer.mouseEventToCoords(e);}catch(err){}
+  if(!c){flash("Мимо панорамы");return;}
   const rec=(LINKS[current]||[])[d.idx];
-  if(rec){ rec.pitch=+c[0].toFixed(1); rec.yaw=+c[1].toFixed(1);
-    persist(); rebuildKeepingView(); renderPanel(); }
+  if(rec){rec.pitch=+c[0].toFixed(1);rec.yaw=+c[1].toFixed(1);rec.ang=angOf(rec.pitch);
+    persist();keepView();renderPanel();}
 },true);
 
-/* --- добавление --- */
 $("pano").addEventListener("click",e=>{
-  if(!editing) return;
-  if(e.target.closest(".hs")) return;
+  if(!editing)return;
+  if(e.target.closest(".hs"))return;
   const to=target.value;
-  if(!to){ flash("Сначала выбери комнату в списке"); return; }
-  if(to===current){ flash("Это та же комната"); return; }
-  let c=null; try{ c=viewer.mouseEventToCoords(e); }catch(err){}
-  if(!c) return;
-  (LINKS[current]=LINKS[current]||[]).push({to:to,pitch:+c[0].toFixed(1),yaw:+c[1].toFixed(1)});
-  target.value=""; persist(); rebuildKeepingView(); renderPanel();
-  flash("Стрелка → "+byId[to]);
+  if(!to){flash("Сначала выбери комнату в списке");return;}
+  if(to===current){flash("Это та же комната");return;}
+  let c=null;try{c=viewer.mouseEventToCoords(e);}catch(err){}
+  if(!c)return;
+  const p=+c[0].toFixed(1);
+  (LINKS[current]=LINKS[current]||[]).push({to:to,pitch:p,yaw:+c[1].toFixed(1),ang:angOf(p)});
+  target.value="";persist();keepView();renderPanel();flash("Стрелка → "+byId[to]);
 });
 
-$("editCopy").onclick=()=>{
-  const out=$("editOut"); out.value=JSON.stringify(LINKS); out.select();
-  if(navigator.clipboard) navigator.clipboard.writeText(out.value)
+$("editCopy").onclick=()=>{const o=$("editOut");o.value=JSON.stringify(LINKS);o.select();
+  if(navigator.clipboard)navigator.clipboard.writeText(o.value)
     .then(()=>flash("Скопировано"),()=>flash("Скопируй из поля вручную"));
-  else flash("Скопируй из поля вручную");
-};
+  else flash("Скопируй из поля вручную");};
 $("editReset").onclick=()=>{
-  if(!confirm("Вернуть разметку к вшитой в файл? Правки пропадут.")) return;
-  LINKS=JSON.parse(JSON.stringify(BASE_LINKS));
-  persist(); rebuildKeepingView(); renderPanel(); flash("Возвращено");
-};
+  if(!confirm("Вернуть разметку к вшитой в файл? Правки пропадут."))return;
+  LINKS=JSON.parse(JSON.stringify(BASE_LINKS));persist();keepView();renderPanel();flash("Возвращено");};
 </script>
 </body>
 </html>
