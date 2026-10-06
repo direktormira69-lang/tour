@@ -143,8 +143,8 @@ const START_SCENE="vhod";
 const START_VIEW={pitch:1.2,yaw:-78.8,hfov:75};
 
 const CAN_EDIT=new URLSearchParams(location.search).has("edit");
-const KEY="tourLinks.v6";
-try{["tourLinks.v3","tourLinks.v4","tourLinks.v5"].forEach(k=>localStorage.removeItem(k));}catch(e){}
+const KEY="tourLinks.v7";
+try{["tourLinks.v3","tourLinks.v4","tourLinks.v5","tourLinks.v6"].forEach(k=>localStorage.removeItem(k));}catch(e){}
 const byId=Object.fromEntries(POINTS.map(p=>[p.id,p.title]));
 let LINKS=JSON.parse(JSON.stringify(BASE_LINKS));
 if(CAN_EDIT){try{const s=localStorage.getItem(KEY); if(s) LINKS=JSON.parse(s);}catch(e){}}
