@@ -14,6 +14,7 @@
   html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;
     font-family:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
   #pano{position:absolute;inset:0}
+  body.locked-start #pano{pointer-events:none}
   .pnlm-load-box,.pnlm-about-msg{display:none!important}
   .pnlm-container{background:var(--ink)!important}
 
@@ -129,15 +130,17 @@
 
 <script>
 const POINTS=[
- {id:"vhod",title:"Вход в дом"},{id:"dvor",title:"Двор и парковка"},
- {id:"dorozhka",title:"Дорожка вдоль дома"},{id:"uchastok",title:"Участок"},
- {id:"prihozhaya",title:"Прихожая"},{id:"holl1",title:"Холл у входа"},
+ {id:"vhod",title:"Вход в дом"},{id:"prihozhaya",title:"Прихожая"},
+ {id:"holl1",title:"Холл у входа"},
  {id:"holl2",title:"Центральный холл"},{id:"gostinaya",title:"Кухня-гостиная"},
  {id:"kab1",title:"Кабинет с диваном"},{id:"kab2",title:"Кабинет с панорамой"},
  {id:"kab3",title:"Рабочая комната"},{id:"sanuzel1",title:"Санузел с ванной"},
  {id:"sanuzel2",title:"Санузел с душевой"},{id:"kotelnaya",title:"Котельная"}];
 
-const BASE_LINKS={"vhod": [{"to": "dvor", "pitch": -1.4, "yaw": -176.4, "ang": 7.0}, {"to": "prihozhaya", "pitch": 1.2, "yaw": -78.8, "ang": 7.0}, {"to": "uchastok", "pitch": -1.4, "yaw": 4.2, "ang": 7.0}], "dvor": [{"to": "vhod", "pitch": -3.0, "yaw": 40.2, "ang": 7.0}, {"to": "uchastok", "pitch": -3.0, "yaw": -57.5, "ang": 7.0}], "dorozhka": [{"to": "vhod", "pitch": -0.2, "yaw": -51.1, "ang": 7.0}, {"to": "uchastok", "pitch": -0.1, "yaw": 49.6, "ang": 7.0}], "uchastok": [{"to": "dvor", "pitch": -0.3, "yaw": 43.8, "ang": 7.0}, {"to": "dorozhka", "pitch": -0.3, "yaw": -54.1, "ang": 7.0}, {"to": "kotelnaya", "pitch": -0.3, "yaw": 26.1, "ang": 7.0}], "prihozhaya": [{"to": "holl1", "pitch": -10.7, "yaw": 1.4, "ang": 12.2}, {"to": "dvor", "pitch": -9.2, "yaw": -177.2, "ang": 10.4}], "holl1": [{"to": "kab3", "pitch": -5.8, "yaw": 64.6, "ang": 6.6}, {"to": "sanuzel1", "pitch": -5.8, "yaw": 90.4, "ang": 6.6}, {"to": "kab1", "pitch": -5.7, "yaw": -102.1, "ang": 6.4}, {"to": "gostinaya", "pitch": -5.8, "yaw": -1.3, "ang": 6.6}, {"to": "kab2", "pitch": -5.8, "yaw": 116.9, "ang": 6.6}, {"to": "prihozhaya", "pitch": -5.8, "yaw": -177.6, "ang": 6.6}], "holl2": [{"to": "kab2", "pitch": -9.5, "yaw": -120.2, "ang": 10.8}, {"to": "prihozhaya", "pitch": -9.5, "yaw": -40.8, "ang": 10.8}, {"to": "kab3", "pitch": -11.5, "yaw": 122.3, "ang": 13.1}, {"to": "kab1", "pitch": -9.5, "yaw": -8.2, "ang": 10.8}, {"to": "sanuzel1", "pitch": -9.5, "yaw": -178.6, "ang": 10.8}, {"to": "gostinaya", "pitch": -9.4, "yaw": 44.4, "ang": 10.7}], "gostinaya": [{"to": "kotelnaya", "pitch": -6.6, "yaw": -129.7, "ang": 7.5}, {"to": "holl2", "pitch": -6.6, "yaw": 141.4, "ang": 7.5}], "kab1": [{"to": "sanuzel2", "pitch": -10.4, "yaw": 125.6, "ang": 11.8}, {"to": "holl1", "pitch": -10.5, "yaw": -3.4, "ang": 11.9}], "kab2": [{"to": "holl2", "pitch": -12.4, "yaw": -139.3, "ang": 14.1}], "kab3": [{"to": "holl2", "pitch": -8.9, "yaw": 2.8, "ang": 10.1}], "sanuzel1": [{"to": "holl2", "pitch": -9.4, "yaw": 135.1, "ang": 10.7}], "sanuzel2": [{"to": "kab3", "pitch": -17.8, "yaw": -173.3, "ang": 20.5}], "kotelnaya": [{"to": "gostinaya", "pitch": -7.0, "yaw": 148.5, "ang": 7.9}, {"to": "uchastok", "pitch": -7.0, "yaw": 44.4, "ang": 7.9}]};
+const BASE_LINKS={"vhod": [{"to": "prihozhaya", "pitch": 1.2, "yaw": -78.8, "ang": 7.0}], "prihozhaya": [{"to": "holl1", "pitch": -10.7, "yaw": 1.4, "ang": 12.2}], "holl1": [{"to": "kab3", "pitch": -5.8, "yaw": 64.6, "ang": 6.6}, {"to": "sanuzel1", "pitch": -5.8, "yaw": 90.4, "ang": 6.6}, {"to": "kab1", "pitch": -5.7, "yaw": -102.1, "ang": 6.4}, {"to": "gostinaya", "pitch": -5.8, "yaw": -1.3, "ang": 6.6}, {"to": "kab2", "pitch": -5.8, "yaw": 116.9, "ang": 6.6}, {"to": "prihozhaya", "pitch": -5.8, "yaw": -177.6, "ang": 6.6}], "holl2": [{"to": "kab2", "pitch": -9.5, "yaw": -120.2, "ang": 10.8}, {"to": "prihozhaya", "pitch": -9.5, "yaw": -40.8, "ang": 10.8}, {"to": "kab3", "pitch": -11.5, "yaw": 122.3, "ang": 13.1}, {"to": "kab1", "pitch": -9.5, "yaw": -8.2, "ang": 10.8}, {"to": "sanuzel1", "pitch": -9.5, "yaw": -178.6, "ang": 10.8}, {"to": "gostinaya", "pitch": -9.4, "yaw": 44.4, "ang": 10.7}], "gostinaya": [{"to": "kotelnaya", "pitch": -6.6, "yaw": -129.7, "ang": 7.5}, {"to": "holl2", "pitch": -6.6, "yaw": 141.4, "ang": 7.5}], "kab1": [{"to": "sanuzel2", "pitch": -10.4, "yaw": 125.6, "ang": 11.8}, {"to": "holl1", "pitch": -10.5, "yaw": -3.4, "ang": 11.9}], "kab2": [{"to": "holl2", "pitch": -12.4, "yaw": -139.3, "ang": 14.1}], "kab3": [{"to": "holl2", "pitch": -8.9, "yaw": 2.8, "ang": 10.1}], "sanuzel1": [{"to": "holl2", "pitch": -9.4, "yaw": 135.1, "ang": 10.7}], "sanuzel2": [{"to": "kab3", "pitch": -17.8, "yaw": -173.3, "ang": 20.5}], "kotelnaya": [{"to": "gostinaya", "pitch": -7.0, "yaw": 148.5, "ang": 7.9}]};
+
+const START_SCENE="vhod";
+const START_VIEW={pitch:1.2,yaw:-78.8,hfov:75};
 
 const CAN_EDIT=new URLSearchParams(location.search).has("edit");
 const KEY="tourLinks.v6";
@@ -148,19 +151,30 @@ if(CAN_EDIT){try{const s=localStorage.getItem(KEY); if(s) LINKS=JSON.parse(s);}c
 function persist(){ if(!CAN_EDIT) return; try{localStorage.setItem(KEY,JSON.stringify(LINKS));}catch(e){} }
 
 const $=id=>document.getElementById(id);
-let editing=false, current=POINTS[0].id, sel=null;
+let editing=false, current=START_SCENE, sel=null, spin=false;
 
 function startYaw(id){const a=LINKS[id]; return a&&a.length?a[0].yaw:0;}
 const scenes={};
 POINTS.forEach(p=>{scenes[p.id]={type:"equirectangular",panorama:"pano/"+p.id+".jpg",
   hfov:100,minHfov:45,maxHfov:120,pitch:-4,yaw:startYaw(p.id),hotSpots:[]};});
+Object.assign(scenes[START_SCENE],START_VIEW,{minHfov:START_VIEW.hfov,maxHfov:START_VIEW.hfov});
 
 const viewer=pannellum.viewer("pano",{
-  default:{firstScene:POINTS[0].id,sceneFadeDuration:700,autoLoad:true,
+  default:{firstScene:START_SCENE,sceneFadeDuration:700,autoLoad:true,
     showControls:false,compass:false,friction:0.16,backgroundColor:[0.07,0.06,0.055]},
   scenes:scenes});
 
-viewer.on("scenechange",id=>{current=id;sel=null;paintRoom();buildHits();renderPanel();});
+function setSceneMode(id){
+  const locked=id===START_SCENE;
+  document.body.classList.toggle("locked-start",locked);
+  $("btnSpin").hidden=locked;
+  if(locked){viewer.stopAutoRotate();spin=false;
+    $("btnSpin").setAttribute("aria-pressed","false");}
+}
+setSceneMode(START_SCENE);
+viewer.on("scenechange",id=>{current=id;sel=null;
+  setSceneMode(id);
+  paintRoom();buildHits();renderPanel();});
 viewer.on("load",()=>$("splash").classList.add("gone"));
 function paintRoom(){$("roomName").textContent=byId[current]||current;}
 
@@ -193,6 +207,12 @@ function place(){
   const W=hits.clientWidth, H=hits.clientHeight;
   let p0,y0,hf;
   try{ p0=viewer.getPitch(); y0=viewer.getYaw(); hf=viewer.getHfov(); }catch(e){ return; }
+  if(current===START_SCENE){
+    if(Math.abs(p0-START_VIEW.pitch)>.01) viewer.setPitch(START_VIEW.pitch,false);
+    if(Math.abs(y0-START_VIEW.yaw)>.01) viewer.setYaw(START_VIEW.yaw,false);
+    if(Math.abs(hf-START_VIEW.hfov)>.01) viewer.setHfov(START_VIEW.hfov,false);
+    p0=START_VIEW.pitch; y0=START_VIEW.yaw; hf=START_VIEW.hfov;
+  }
   const f=(W/2)/Math.tan(hf*R/2);
   const lat0=p0*R, lon0=y0*R, s0=Math.sin(lat0), c0=Math.cos(lat0);
   hits.querySelectorAll(".hit").forEach(d=>{
@@ -223,7 +243,6 @@ POINTS.forEach(p=>{const b=document.createElement("button");
 $("btnMenu").onclick=()=>sheet.classList.add("open");
 $("closeSheet").onclick=()=>sheet.classList.remove("open");
 document.addEventListener("keydown",e=>{if(e.key==="Escape")sheet.classList.remove("open");});
-let spin=false;
 $("btnSpin").onclick=()=>{spin=!spin;spin?viewer.startAutoRotate(-2):viewer.stopAutoRotate();
   $("btnSpin").setAttribute("aria-pressed",String(spin));};
 $("btnFull").onclick=()=>{const el=document.documentElement;
